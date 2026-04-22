@@ -3,6 +3,7 @@
 import { useBookingStore } from "@/store/useBookingStore";
 import { CheckCircle, Calendar, User, Clock, Scissors, CreditCard } from "lucide-react";
 import { useState } from "react";
+import { createBooking } from "@/actions/booking";
 
 export function StepConfirm({ tenant }: { tenant: any }) {
   const state = useBookingStore();
@@ -17,27 +18,32 @@ export function StepConfirm({ tenant }: { tenant: any }) {
 
   const handleConfirm = async () => {
     setIsSubmitting(true);
-    // Giả lập API call lưu dữ liệu và trigger Twilio SMS
-    setTimeout(() => {
-      // Lưu vào localStorage để đồng bộ sang Admin
-      try {
-        const newBooking = {
-          id: Math.random().toString(36).substring(7),
-          customer: state.customerInfo.fullName,
-          service: state.selectedServices.map(s => s.name).join(", "),
-          date: `${state.selectedDate?.toDateString()} at ${state.selectedTime}`,
-          status: "Pending",
-          price: `$${totalPrice}`
-        };
-        const stored = localStorage.getItem('recentBookings');
-        let existingBookings = [];
-        if (stored) { existingBookings = JSON.parse(stored); }
-        localStorage.setItem('recentBookings', JSON.stringify([newBooking, ...existingBookings]));
-      } catch (e) {}
+    
+    try {
+      // Pick the first service to associate with the booking
+      const mainService = state.selectedServices[0];
+      
+      const response = await createBooking({
+        tenantId: tenant.id,
+        customerName: state.customerInfo.fullName,
+        customerPhone: state.customerInfo.phone,
+        service: mainService,
+        staff: state.selectedStaff,
+        date: state.selectedDate ? state.selectedDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        time: state.selectedTime || "12:00",
+      });
 
+      if (response.success) {
+        setIsSuccess(true);
+      } else {
+        alert(response.error || "Something went wrong.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to submit booking");
+    } finally {
       setIsSubmitting(false);
-      setIsSuccess(true);
-    }, 2000);
+    }
   };
 
   if (isSuccess) {

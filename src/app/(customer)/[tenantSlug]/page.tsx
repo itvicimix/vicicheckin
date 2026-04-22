@@ -1,5 +1,6 @@
 import { BookingWizard } from "@/components/booking/BookingWizard";
 import { notFound } from "next/navigation";
+import { getTenantBySlug } from "@/actions/tenant";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -9,17 +10,8 @@ export default async function TenantBookingPage({ params }: PageProps) {
   const resolvedParams = await params;
   const { tenantSlug } = resolvedParams;
 
-  // In a real app, fetch tenant info from Firestore here
-  // const tenant = await getTenant(tenantSlug);
-  // if (!tenant) notFound();
-
-  // Mock tenant for UI design purposes
-  const tenant = {
-    name: "Luxury Spa & Nail",
-    slug: tenantSlug,
-    logo: "Spa", // Placeholder for icon
-    address: "123 Beauty Ave, NY",
-  };
+  const tenant = await getTenantBySlug(tenantSlug);
+  if (!tenant) notFound();
 
   return (
     <main className="min-h-screen bg-background relative overflow-hidden flex flex-col">

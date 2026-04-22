@@ -1,18 +1,100 @@
 "use client";
 
-import { useState } from "react";
-import { Search, MoreVertical, Edit2, History, Star, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { Search, MoreVertical, Edit2, History, Star, Plus, Trash2, Loader2 } from "lucide-react";
+import { getCustomers, createCustomer, deleteCustomer } from "@/actions/customer";
+import { getTenantBySlug } from "@/actions/tenant";
 
 export default function CustomersPage() {
-  const [showAddForm, setShowAddForm] = useState(false);
+  const params = useParams();
+  const tenantSlug = params.tenantSlug as string;
 
-  const customers = [
-    { id: "c1", name: "Alice Johnson", phone: "(555) 123-4567", email: "alice@example.com", visits: 12, spent: "$650", lastVisit: "2 days ago", vip: true },
-    { id: "c2", name: "Emily Davis", phone: "(555) 987-6543", email: "emily.d@example.com", visits: 4, spent: "$180", lastVisit: "1 week ago", vip: false },
-    { id: "c3", name: "Michael Smith", phone: "(555) 456-7890", email: "msmith@example.com", visits: 1, spent: "$80", lastVisit: "Today", vip: false },
-    { id: "c4", name: "Sarah Wilson", phone: "(555) 222-3333", email: "sarahw@example.com", visits: 24, spent: "$1,250", lastVisit: "1 month ago", vip: true },
-    { id: "c5", name: "John Doe", phone: "(555) 888-9999", email: "john.doe@example.com", visits: 2, spent: "$70", lastVisit: "3 weeks ago", vip: false },
-  ];
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [tenant, setTenant] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Form State
+  const [formName, setFormName] = useState("");
+  const [formPhone, setFormPhone] = useState("");
+  const [formEmail, setFormEmail] = useState("");
+  const [formVip, setFormVip] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const t = await getTenantBySlug(tenantSlug);
+        if (t) {
+          setTenant(t);
+          const c = await getCustomers(t.id);
+          setCustomers(c);
+        }
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [tenantSlug]);
+
+  const handleCreateCustomer = async () => {
+    if (!tenant || !formName || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const result = await createCustomer(tenant.id, {
+        name: formName,
+        phone: formPhone,
+        email: formEmail,
+        vip: formVip,
+      });
+
+      if (result.success) {
+        const updated = await getCustomers(tenant.id);
+        setCustomers(updated);
+        setShowAddForm(false);
+        setFormName("");
+        setFormPhone("");
+        setFormEmail("");
+        setFormVip(false);
+      } else {
+        alert(result.error);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to create customer");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this customer?")) return;
+
+    try {
+      const result = await deleteCustomer(id);
+      if (result.success) {
+        setCustomers(customers.filter(c => c.id !== id));
+      } else {
+        alert(result.error);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to delete customer");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-8rem)]">
@@ -33,9 +115,6 @@ export default function CustomersPage() {
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
             />
           </div>
-          <button className="text-sm font-medium text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors whitespace-nowrap">
-            Export CSV
-          </button>
           <button 
             onClick={() => setShowAddForm(!showAddForm)}
             className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 text-sm whitespace-nowrap"
@@ -52,23 +131,46 @@ export default function CustomersPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-              <input type="text" placeholder="e.g., Jane Smith" className="w-full p-2.5 rounded-lg border border-gray-200 focus:border-primary outline-none" />
+              <input 
+                type="text" 
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="e.g., Jane Smith" 
+                className="w-full p-2.5 rounded-lg border border-gray-200 focus:border-primary outline-none" 
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
-              <input type="tel" placeholder="(555) 000-0000" className="w-full p-2.5 rounded-lg border border-gray-200 focus:border-primary outline-none" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+              <input 
+                type="tel" 
+                value={formPhone}
+                onChange={(e) => setFormPhone(e.target.value)}
+                placeholder="(555) 000-0000" 
+                className="w-full p-2.5 rounded-lg border border-gray-200 focus:border-primary outline-none" 
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-              <input type="email" placeholder="jane@example.com" className="w-full p-2.5 rounded-lg border border-gray-200 focus:border-primary outline-none" />
+              <input 
+                type="email" 
+                value={formEmail}
+                onChange={(e) => setFormEmail(e.target.value)}
+                placeholder="jane@example.com" 
+                className="w-full p-2.5 rounded-lg border border-gray-200 focus:border-primary outline-none" 
+              />
             </div>
             <div className="flex flex-col justify-end pb-1">
               <label className="flex items-center gap-3 cursor-pointer p-2.5 border border-transparent hover:bg-gray-100 rounded-lg transition-colors">
                 <div className="relative flex items-center">
-                  <input type="checkbox" className="w-5 h-5 accent-yellow-400 rounded cursor-pointer" />
+                  <input 
+                    type="checkbox" 
+                    checked={formVip}
+                    onChange={(e) => setFormVip(e.target.checked)}
+                    className="w-5 h-5 accent-yellow-400 rounded cursor-pointer" 
+                  />
                 </div>
                 <div className="flex items-center gap-1.5 font-medium text-gray-700 select-none">
-                  <Star size={18} className="text-yellow-400 fill-yellow-400" />
+                  <Star size={18} className={formVip ? "text-yellow-400 fill-yellow-400" : "text-gray-300"} />
                   Mark as VIP
                 </div>
               </label>
@@ -76,7 +178,13 @@ export default function CustomersPage() {
           </div>
           <div className="mt-4 flex justify-end gap-3">
             <button onClick={() => setShowAddForm(false)} className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium transition-colors">Cancel</button>
-            <button className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-dark transition-colors">Save Customer</button>
+            <button 
+              onClick={handleCreateCustomer}
+              disabled={isSubmitting}
+              className="bg-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
+            >
+              {isSubmitting ? "Saving..." : "Save Customer"}
+            </button>
           </div>
         </div>
       )}
@@ -89,51 +197,63 @@ export default function CustomersPage() {
               <th className="px-6 py-4 font-semibold">Customer Details</th>
               <th className="px-6 py-4 font-semibold">Contact Info</th>
               <th className="px-6 py-4 font-semibold text-center">Total Visits</th>
-              <th className="px-6 py-4 font-semibold">Total Spent</th>
               <th className="px-6 py-4 font-semibold">Last Visit</th>
               <th className="px-6 py-4 font-semibold text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="text-sm">
-            {customers.map((c) => (
-              <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
-                      {c.name.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="font-bold text-gray-900 flex items-center gap-2">
-                        {c.name}
-                        {c.vip && <Star size={14} className="text-yellow-400 fill-yellow-400" />}
-                      </div>
-                      <div className="text-xs text-gray-500">ID: #{c.id}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-gray-900 font-medium">{c.phone}</div>
-                  <div className="text-gray-500">{c.email}</div>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <span className="inline-block bg-gray-100 text-gray-800 font-bold px-2 py-1 rounded-md text-xs">
-                    {c.visits}
-                  </span>
-                </td>
-                <td className="px-6 py-4 font-bold text-green-700">{c.spent}</td>
-                <td className="px-6 py-4 text-gray-600">{c.lastVisit}</td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View History">
-                      <History size={18} />
-                    </button>
-                    <button className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Edit Customer">
-                      <Edit2 size={18} />
-                    </button>
-                  </div>
+            {customers.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                  No customers found. New customers are created when bookings are made.
                 </td>
               </tr>
-            ))}
+            ) : (
+              customers.map((c) => (
+                <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                        {c.name.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="font-bold text-gray-900 flex items-center gap-2">
+                          {c.name}
+                          {c.vip && <Star size={14} className="text-yellow-400 fill-yellow-400" />}
+                        </div>
+                        <div className="text-xs text-gray-500">ID: #{c.id.substring(0, 8)}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-gray-900 font-medium">{c.phone || "No phone"}</div>
+                    <div className="text-gray-500">{c.email || "No email"}</div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="inline-block bg-gray-100 text-gray-800 font-bold px-2 py-1 rounded-md text-xs">
+                      {c.visits}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">
+                    {c.lastVisit !== "No visits" ? new Date(c.lastVisit).toLocaleDateString() : "No visits"}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View History">
+                        <History size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(c.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
+                        title="Delete Customer"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
