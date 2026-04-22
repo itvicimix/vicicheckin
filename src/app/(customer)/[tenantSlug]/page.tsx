@@ -28,7 +28,7 @@ export default async function TenantBookingPage({ params }: PageProps) {
             </div>
             <div>
               <h1 className="font-semibold text-lg text-gray-900">{tenant.name}</h1>
-              <p className="text-xs text-gray-500">{tenant.address}</p>
+              <p className="text-xs text-gray-500">{tenant.location}</p>
             </div>
           </div>
         </div>
