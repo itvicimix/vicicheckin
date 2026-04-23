@@ -9,7 +9,7 @@ export async function getServices(tenantId: string) {
       where: { tenantId },
       orderBy: { createdAt: "desc" },
     });
-    return services;
+    return JSON.parse(JSON.stringify(services));
   } catch (error) {
     console.error("Failed to fetch services:", error);
     return [];

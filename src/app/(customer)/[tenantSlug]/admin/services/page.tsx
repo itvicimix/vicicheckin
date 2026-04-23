@@ -250,9 +250,9 @@ export default function ServicesPage() {
         </div>
       )}
 
-      {/* Table Content */}
-      <div className="flex-1 overflow-auto">
-        <table className="w-full text-left border-collapse min-w-[800px]">
+      {/* Desktop Table Content */}
+      <div className="flex-1 overflow-auto hidden md:block">
+        <table className="w-full text-left border-collapse">
           <thead className="sticky top-0 bg-gray-50 z-10 shadow-sm">
             <tr className="text-gray-500 text-sm border-b border-gray-200">
               <th className="px-6 py-4 font-semibold">Service Name</th>
@@ -301,6 +301,47 @@ export default function ServicesPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card Content */}
+      <div className="flex-1 overflow-auto md:hidden p-4 space-y-4 bg-gray-50/50">
+        {services.length === 0 ? (
+          <div className="py-12 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-200">
+            No services found. Add your first service above.
+          </div>
+        ) : (
+          services.map((service) => (
+            <div key={service.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="font-bold text-gray-900">{service.name}</div>
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                    {service.category || "General"}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-bold text-primary">${service.price}</div>
+                  <div className="text-[10px] text-gray-400 font-medium">{service.duration} min</div>
+                </div>
+              </div>
+              
+              <div className="flex gap-2 pt-1">
+                <button 
+                  onClick={() => { openEditModal(service); setShowAddForm(true); }}
+                  className="flex-1 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 font-medium text-xs rounded-lg transition-colors border border-gray-100"
+                >
+                  Edit
+                </button>
+                <button 
+                  onClick={() => handleDelete(service.id)}
+                  className="flex-1 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium text-xs rounded-lg transition-colors border border-red-100"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
     </div>

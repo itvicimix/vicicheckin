@@ -14,7 +14,10 @@ export default async function TenantBookingPage({ params }: PageProps) {
   if (!tenant) notFound();
 
   return (
-    <main className="min-h-screen bg-background relative overflow-hidden flex flex-col">
+    <main 
+      className="min-h-screen bg-background relative overflow-hidden flex flex-col"
+      style={tenant.themeColor ? { '--color-primary': tenant.themeColor } as React.CSSProperties : undefined}
+    >
       {/* Background decoration */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[100px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent-1/10 blur-[100px] rounded-full pointer-events-none" />
@@ -23,8 +26,12 @@ export default async function TenantBookingPage({ params }: PageProps) {
       <header className="relative z-10 py-6 px-4 border-b border-gray-100 bg-white/80 backdrop-blur-md">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl">
-              {tenant.name.charAt(0)}
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl overflow-hidden ring-2 ring-primary/20 ${!tenant.logo ? 'bg-primary text-white' : 'bg-white'}`}>
+              {tenant.logo ? (
+                <img src={tenant.logo} alt="Logo" className="w-full h-full object-contain p-0.5" />
+              ) : (
+                tenant.name.charAt(0)
+              )}
             </div>
             <div>
               <h1 className="font-semibold text-lg text-gray-900">{tenant.name}</h1>

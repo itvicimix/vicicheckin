@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import { getCustomers } from "@/actions/customer";
 import { getBookings } from "@/actions/booking";
 import { getTenantBySlug } from "@/actions/tenant";
+import { sendSMSPromotion } from "@/actions/sms";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -34,8 +35,7 @@ export default function AdminDashboardPage() {
             getCustomers(t.id)
           ]);
           
-          // Format bookings for display
-          const formattedBookings = bookings.slice(0, 5).map(b => ({
+          const formattedBookings = bookings.slice(0, 5).map((b: any) => ({
             id: b.id,
             customer: b.customerName,
             service: b.service?.name || "Service",
@@ -65,25 +65,48 @@ export default function AdminDashboardPage() {
   };
 
   const selectAll = () => {
-    if (selectedCustomers.length === customersList.length) {
+    if (selectedCustomers.length === customersList.length && customersList.length > 0) {
       setSelectedCustomers([]);
     } else {
       setSelectedCustomers(customersList.map(c => c.id));
     }
   };
 
-  const handleSendSMS = () => {
+  const select500 = () => {
+    setSelectedCustomers(customersList.slice(0, 500).map(c => c.id));
+  };
+
+  const handleSendSMS = async () => {
     if (!smsText.trim() || selectedCustomers.length === 0) return;
     setIsSending(true);
-    // Simulate SMS API
-    setTimeout(() => {
+
+    const phoneNumbers = customersList
+      .filter(c => selectedCustomers.includes(c.id) && c.phone)
+      .map(c => c.phone);
+
+    if (phoneNumbers.length === 0) {
+      alert("No valid phone numbers found for the selected customers.");
       setIsSending(false);
-      setShowSmsModal(false);
-      setSmsText("");
-      setSelectedCustomers([]);
-      alert(`Successfully sent SMS promotion to ${selectedCustomers.length} customers!`);
-    }, 1500);
+      return;
+    }
+
+    try {
+      const result = await sendSMSPromotion(smsText, phoneNumbers);
+      if (result.success) {
+        alert(result.message);
+        setShowSmsModal(false);
+        setSmsText("");
+        setSelectedCustomers([]);
+      } else {
+        alert("Error sending SMS: " + result.error);
+      }
+    } catch (error) {
+      alert("An unknown error occurred.");
+    } finally {
+      setIsSending(false);
+    }
   };
+
   const stats = [
     { title: "Total Bookings", value: recentBookings.length, trend: "+100%", icon: CalendarCheck },
     { title: "Revenue", value: `$${recentBookings.reduce((acc, b) => acc + parseFloat(b.price.replace('$', '')), 0)}`, trend: "+100%", icon: DollarSign },
@@ -101,7 +124,6 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6 relative">
-      
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => {
@@ -139,8 +161,10 @@ export default function AdminDashboardPage() {
               View All
             </button>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[600px]">
+          
+          {/* Desktop Table View */}
+          <div className="overflow-x-auto hidden md:block">
+            <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50/50 text-gray-500 text-sm">
                   <th className="px-6 py-4 font-medium">Customer</th>
@@ -174,6 +198,33 @@ export default function AdminDashboardPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile List View */}
+          <div className="md:hidden divide-y divide-gray-50">
+            {recentBookings.length === 0 ? (
+              <div className="p-12 text-center text-gray-400">No recent bookings</div>
+            ) : (
+              recentBookings.map((booking) => (
+                <div key={booking.id} className="p-4 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-bold text-gray-900">{booking.customer}</div>
+                      <div className="text-xs text-gray-500">{booking.service}</div>
+                    </div>
+                    <div className="font-bold text-gray-900 text-sm">{booking.price}</div>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <div className="text-gray-500">{booking.date}</div>
+                    <span className={`px-2 py-0.5 rounded-full font-medium ${
+                      booking.status === 'Confirmed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {booking.status}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -213,7 +264,6 @@ export default function AdminDashboardPage() {
       {showSmsModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl animate-in zoom-in-95 fade-in flex flex-col max-h-[90vh]">
-            
             <div className="p-6 border-b border-gray-100 flex justify-between items-center">
               <div>
                 <h3 className="font-bold text-xl text-gray-900">Send SMS Promotion</h3>
@@ -228,8 +278,6 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="p-6 overflow-y-auto space-y-6">
-              
-              {/* Message Input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Message Content</label>
                 <textarea 
@@ -240,20 +288,27 @@ export default function AdminDashboardPage() {
                   className="w-full p-3 rounded-xl border border-gray-200 focus:border-primary outline-none resize-none text-sm"
                 />
                 <div className="text-right mt-1 text-xs text-gray-400">
-                  {smsText.length} / 160 characters
+                  {smsText.length} / 300 characters
                 </div>
               </div>
 
-              {/* Select Customers */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="block text-sm font-medium text-gray-700">Select Recipients</label>
-                  <button 
-                    onClick={selectAll}
-                    className="text-xs text-primary hover:underline font-medium"
-                  >
-                    {selectedCustomers.length === customersList.length ? "Deselect All" : "Select All"}
-                  </button>
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={select500}
+                      className="text-xs text-primary hover:underline font-medium"
+                    >
+                      Select 500
+                    </button>
+                    <button 
+                      onClick={selectAll}
+                      className="text-xs text-primary hover:underline font-medium"
+                    >
+                      {selectedCustomers.length === customersList.length && customersList.length > 0 ? "Deselect All" : "Select All"}
+                    </button>
+                  </div>
                 </div>
                 <div className="border border-gray-200 rounded-xl max-h-48 overflow-y-auto">
                   {customersList.length === 0 ? (
@@ -280,7 +335,6 @@ export default function AdminDashboardPage() {
                   )}
                 </div>
               </div>
-
             </div>
 
             <div className="p-6 border-t border-gray-100 flex gap-3 bg-gray-50 rounded-b-2xl">
@@ -305,11 +359,9 @@ export default function AdminDashboardPage() {
                 )}
               </button>
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }

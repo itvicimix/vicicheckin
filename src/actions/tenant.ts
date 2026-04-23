@@ -20,7 +20,7 @@ export async function getTenantBySlug(slug: string) {
     const tenant = await prisma.tenant.findUnique({
       where: { slug }
     });
-    return tenant;
+    return tenant ? JSON.parse(JSON.stringify(tenant)) : null;
   } catch (error) {
     console.error("Failed to fetch tenant by slug:", error);
     return null;
@@ -29,7 +29,7 @@ export async function getTenantBySlug(slug: string) {
 
 export async function createTenant(data: any) {
   try {
-    const { name, slug, adminEmail, adminPassword, themeColor, location, phone, payments } = data;
+    const { name, slug, adminEmail, adminPassword, themeColor, logo, location, phone, payments } = data;
 
     if (!name || !slug || !adminEmail || !adminPassword) {
       return { success: false, error: "Vui lòng điền đầy đủ các trường bắt buộc (Tên, Slug, Email, Password)" };
@@ -47,6 +47,7 @@ export async function createTenant(data: any) {
         adminEmail,
         adminPassword,
         themeColor: themeColor || "#000000",
+        logo: logo || null,
         location,
         phone,
         payments: JSON.stringify(payments),
@@ -73,6 +74,8 @@ export async function updateTenantSettings(tenantId: string, data: any) {
         slotInterval: parseInt(data.slotInterval) || 30,
         minLeadTime: parseInt(data.minLeadTime) || 60,
         themeColor: data.themeColor,
+        logo: data.logo !== undefined ? data.logo : undefined,
+        googleReviewUrl: data.googleReviewUrl !== undefined ? data.googleReviewUrl : undefined,
         paymentConfig: data.paymentConfig ? JSON.stringify(data.paymentConfig) : null,
       },
     });

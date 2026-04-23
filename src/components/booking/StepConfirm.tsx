@@ -1,9 +1,10 @@
 "use client";
 
 import { useBookingStore } from "@/store/useBookingStore";
-import { CheckCircle, Calendar, User, Clock, Scissors, CreditCard } from "lucide-react";
+import { CheckCircle, Calendar, User, Clock, Scissors, CreditCard, Star, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { createBooking } from "@/actions/booking";
+import { Gift } from "lucide-react";
 
 export function StepConfirm({ tenant }: { tenant: any }) {
   const state = useBookingStore();
@@ -15,6 +16,13 @@ export function StepConfirm({ tenant }: { tenant: any }) {
     const val = parseInt(s.price.replace(/[^0-9]/g, '')) || 0;
     return sum + val;
   }, 0);
+
+  let promoDiscount = 0;
+  if (state.promotionPrize && state.promotionPrize.includes('% Off')) {
+    promoDiscount = parseInt(state.promotionPrize.replace('% Off', '')) || 0;
+  }
+  
+  const totalDiscountPercentage = (state.loyaltyStatus?.discountPercentage || 0) + promoDiscount;
 
   const handleConfirm = async () => {
     setIsSubmitting(true);
@@ -31,6 +39,8 @@ export function StepConfirm({ tenant }: { tenant: any }) {
         staff: state.selectedStaff,
         date: state.selectedDate ? state.selectedDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         time: state.selectedTime || "12:00",
+        discountPercentage: totalDiscountPercentage,
+        promotionPrize: state.promotionPrize,
       });
 
       if (response.success) {
@@ -53,9 +63,37 @@ export function StepConfirm({ tenant }: { tenant: any }) {
           <CheckCircle size={48} />
         </div>
         <h2 className="text-3xl font-bold text-gray-900 mb-2">Booking Confirmed!</h2>
-        <p className="text-gray-500 mb-8 max-w-sm">
+        <p className="text-gray-500 mb-6 max-w-sm">
           Thank you, {state.customerInfo.fullName}. Your appointment at {tenant.name} is successfully booked. We've sent a confirmation SMS to {state.customerInfo.phone}.
         </p>
+
+        <div className="bg-white border-2 border-yellow-100 shadow-sm w-full max-w-sm rounded-2xl p-6 mb-8 transition-transform hover:-translate-y-1">
+          <h3 className="font-bold text-gray-900 mb-2">How was your experience?</h3>
+          <p className="text-sm text-gray-500 mb-4">Please support us by leaving a 5-star review on Google Maps. It means the world to us!</p>
+          <a 
+            href={tenant.googleReviewUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tenant.name + " " + (tenant.location || ""))}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex justify-center gap-2 group cursor-pointer"
+            title="Leave a 5-star review on Google"
+          >
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star 
+                key={star} 
+                className="w-10 h-10 text-yellow-400 fill-yellow-400 transform transition-transform group-hover:scale-110 drop-shadow-sm" 
+              />
+            ))}
+          </a>
+          <a 
+            href={tenant.googleReviewUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tenant.name + " " + (tenant.location || ""))}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700"
+          >
+            Write a review <ExternalLink size={14} />
+          </a>
+        </div>
+
         <button 
           onClick={() => {
             state.reset();
@@ -114,9 +152,32 @@ export function StepConfirm({ tenant }: { tenant: any }) {
                 </div>
               ))}
             </div>
-            <div className="mt-4 flex justify-between items-center bg-primary/5 p-3 rounded-xl text-primary">
-              <span className="font-semibold">Total Estimated</span>
-              <span className="font-bold text-xl">${totalPrice}</span>
+
+            {state.loyaltyStatus && state.loyaltyStatus.discountPercentage > 0 && (
+              <div className="mt-3 flex justify-between items-center text-green-600 bg-green-50 p-2 rounded-lg text-sm font-medium">
+                <span>Loyalty Discount ({state.loyaltyStatus.tier} - {state.loyaltyStatus.discountPercentage}%)</span>
+                <span>- ${(totalPrice * (state.loyaltyStatus.discountPercentage / 100)).toFixed(2)}</span>
+              </div>
+            )}
+
+            {state.promotionPrize && (
+              <div className="mt-3 flex justify-between items-center text-green-600 bg-green-50 p-2 rounded-lg text-sm font-medium">
+                <span className="flex items-center gap-1"><Gift size={14}/> Lucky Wheel Prize</span>
+                <span>{state.promotionPrize}</span>
+              </div>
+            )}
+
+            <div className="mt-4 flex flex-col bg-primary/5 p-4 rounded-xl text-primary gap-1">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Final Total</span>
+                <span className="font-bold text-xl">
+                  ${(totalPrice * (1 - totalDiscountPercentage / 100)).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-sm opacity-80">
+                <span>Points you'll earn</span>
+                <span>+ {Math.floor((totalPrice * (1 - totalDiscountPercentage / 100)) / 3)} pts</span>
+              </div>
             </div>
           </div>
 

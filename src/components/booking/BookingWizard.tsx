@@ -25,7 +25,7 @@ export function BookingWizard({ tenant }: { tenant: any }) {
       case 4:
         return <StepGuests key="step4" />;
       case 5:
-        return <StepInfo key="step5" />;
+        return <StepInfo key="step5" tenant={tenant} />;
       case 6:
         return <StepPayment key="step6" />;
       case 7:

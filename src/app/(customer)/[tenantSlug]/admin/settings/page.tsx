@@ -22,6 +22,8 @@ export default function SettingsPage() {
     slotInterval: "30",
     minLeadTime: "60",
     themeColor: "#000000",
+    logo: "",
+    googleReviewUrl: "",
     paymentConfig: {
       creditCard: { apiKey: "", merchantId: "" },
       paypal: { clientId: "", secret: "" },
@@ -65,6 +67,8 @@ export default function SettingsPage() {
           slotInterval: t.slotInterval?.toString() || "30",
           minLeadTime: t.minLeadTime?.toString() || "60",
           themeColor: t.themeColor || "#000000",
+          logo: t.logo || "",
+          googleReviewUrl: t.googleReviewUrl || "",
           paymentConfig: config
         });
       }
@@ -106,6 +110,17 @@ export default function SettingsPage() {
         }
       }
     });
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, logo: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   if (isLoading) {
@@ -163,6 +178,24 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
+            <div className="space-y-2 col-span-1 md:col-span-2">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Palette size={16} /> Business Logo
+              </label>
+              <div className="flex items-center gap-4">
+                {formData.logo ? (
+                  <img src={formData.logo} alt="Logo" className="h-16 w-16 object-contain rounded-lg border border-gray-200" />
+                ) : (
+                  <div className="h-16 w-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs border border-gray-200">No Logo</div>
+                )}
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                />
+              </div>
+            </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <MapPin size={16} /> Address / Location
@@ -186,6 +219,19 @@ export default function SettingsPage() {
                 placeholder="(555) 000-0000"
                 className="w-full p-2.5 rounded-xl border border-gray-200 focus:border-primary outline-none" 
               />
+            </div>
+            <div className="space-y-2 col-span-1 md:col-span-2">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <MapPin size={16} /> Google Map Review Link
+              </label>
+              <input 
+                type="url" 
+                value={formData.googleReviewUrl}
+                onChange={(e) => setFormData({...formData, googleReviewUrl: e.target.value})}
+                placeholder="e.g., https://share.google/..."
+                className="w-full p-2.5 rounded-xl border border-gray-200 focus:border-primary outline-none" 
+              />
+              <p className="text-xs text-gray-500 italic">This link will be used in the step 7 booking confirmation page for customer reviews.</p>
             </div>
           </div>
         </div>

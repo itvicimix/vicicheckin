@@ -26,6 +26,12 @@ interface BookingState {
     notes?: string;
   };
   paymentMethod: 'in_store' | 'credit_card' | 'paypal' | null;
+  loyaltyStatus: {
+    tier: string;
+    points: number;
+    discountPercentage: number;
+  } | null;
+  promotionPrize: string | null;
 
   // Actions
   nextStep: () => void;
@@ -37,6 +43,8 @@ interface BookingState {
   setGuests: (count: number) => void;
   setCustomerInfo: (info: { fullName: string; phone: string; notes?: string }) => void;
   setPaymentMethod: (method: 'in_store' | 'credit_card' | 'paypal') => void;
+  setLoyaltyStatus: (status: BookingState['loyaltyStatus']) => void;
+  setPromotionPrize: (prize: string | null) => void;
   reset: () => void;
 }
 
@@ -49,6 +57,8 @@ export const useBookingStore = create<BookingState>((set) => ({
   guests: 1,
   customerInfo: { fullName: '', phone: '' },
   paymentMethod: null,
+  loyaltyStatus: null,
+  promotionPrize: null,
 
   nextStep: () => set((state) => ({ step: state.step + 1 })),
   prevStep: () => set((state) => ({ step: Math.max(1, state.step - 1) })),
@@ -66,6 +76,8 @@ export const useBookingStore = create<BookingState>((set) => ({
   setGuests: (guests) => set({ guests }),
   setCustomerInfo: (info) => set({ customerInfo: info }),
   setPaymentMethod: (method) => set({ paymentMethod: method }),
+  setLoyaltyStatus: (status) => set({ loyaltyStatus: status }),
+  setPromotionPrize: (prize) => set({ promotionPrize: prize }),
   reset: () =>
     set({
       step: 1,
@@ -76,5 +88,7 @@ export const useBookingStore = create<BookingState>((set) => ({
       guests: 1,
       customerInfo: { fullName: '', phone: '' },
       paymentMethod: null,
+      loyaltyStatus: null,
+      promotionPrize: null,
     }),
 }));
