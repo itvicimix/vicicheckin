@@ -20,6 +20,8 @@
       "luckyWheelEnabled": true,
       "luckyWheelLastDisabled": null,
       "luckyWheelConfig": "[{\"label\":\"10% Off\",\"value\":\"12\",\"probability\":20},{\"label\":\"15% Off\",\"value\":15,\"probability\":10},{\"label\":\"20% Off\",\"value\":20,\"probability\":5},{\"label\":\"5% Off\",\"value\":5,\"probability\":40},{\"label\":\"Free Gift\",\"value\":\"5\",\"probability\":25}]",
+      "chatbotEnabled": false,
+      "chatbotConfig": null,
       "status": "Active",
       "createdAt": "2026-04-22T21:14:24.299Z",
       "updatedAt": "2026-04-24T20:20:17.672Z"
@@ -44,6 +46,8 @@
       "luckyWheelEnabled": false,
       "luckyWheelLastDisabled": null,
       "luckyWheelConfig": null,
+      "chatbotEnabled": false,
+      "chatbotConfig": null,
       "status": "Active",
       "createdAt": "2026-04-23T21:46:59.952Z",
       "updatedAt": "2026-04-23T21:46:59.952Z"
@@ -94,6 +98,15 @@
       "duration": 45,
       "category": "Nails",
       "createdAt": "2026-04-24T17:25:26.115Z"
+    },
+    {
+      "id": "s1",
+      "tenantId": "c97cb185-b4b8-44bb-80cc-34c1ec002007",
+      "name": "Classic Manicure",
+      "price": 35,
+      "duration": 45,
+      "category": null,
+      "createdAt": "2026-04-24T20:54:26.972Z"
     },
     {
       "id": "s2",
@@ -231,6 +244,20 @@
       "notes": "123456",
       "status": "Pending",
       "createdAt": "2026-04-24T20:26:50.327Z"
+    },
+    {
+      "id": "ea899d31-3984-4b4b-9ea2-9f4c1ab358f5",
+      "tenantId": "c97cb185-b4b8-44bb-80cc-34c1ec002007",
+      "customerName": "nn",
+      "customerPhone": "+15551234567",
+      "serviceId": "s1",
+      "staffId": "staff2",
+      "customerId": "28157c10-ff09-40b7-a956-8cae4de7b3a5",
+      "date": "2026-04-24",
+      "time": "05:00 PM",
+      "notes": "test",
+      "status": "Pending",
+      "createdAt": "2026-04-24T20:54:26.978Z"
     }
   ],
   "customer": [
@@ -311,7 +338,7 @@
       "phone": "+15551234567",
       "email": null,
       "vip": false,
-      "points": 21,
+      "points": 32,
       "createdAt": "2026-04-24T17:17:16.933Z"
     },
     {
@@ -461,6 +488,14 @@
       "prize": "2% Off",
       "status": "Unused",
       "createdAt": "2026-04-23T20:36:32.075Z"
+    },
+    {
+      "id": "431a3089-f61c-4394-9b11-1652d0868221",
+      "tenantId": "c97cb185-b4b8-44bb-80cc-34c1ec002007",
+      "phone": "7771451104",
+      "prize": "5% Off",
+      "status": "Unused",
+      "createdAt": "2026-04-24T21:01:49.763Z"
     },
     {
       "id": "a89658dd-d96b-4c71-92b8-ad7fef103cd4",
