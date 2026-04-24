@@ -21,8 +21,11 @@ export function StepConfirm({ tenant }: { tenant: any }) {
   }, 0);
 
   let promoDiscount = 0;
-  if (state.promotionPrize && state.promotionPrize.includes('% Off')) {
-    promoDiscount = parseInt(state.promotionPrize.replace('% Off', '')) || 0;
+  if (state.promotionPrize) {
+    const match = state.promotionPrize.match(/(\d+)\s*%/);
+    if (match) {
+      promoDiscount = parseInt(match[1]) || 0;
+    }
   }
   
   const totalDiscountPercentage = (state.loyaltyStatus?.discountPercentage || 0) + promoDiscount + state.couponDiscount;
@@ -306,6 +309,13 @@ export function StepConfirm({ tenant }: { tenant: any }) {
                 <div className="flex justify-between items-center text-sm font-medium text-green-600">
                   <span>Promo Discount ({state.couponDiscount}%)</span>
                   <span>-${(totalPrice * (state.couponDiscount / 100)).toFixed(2)}</span>
+                </div>
+              )}
+              
+              {promoDiscount > 0 && (
+                <div className="flex justify-between items-center text-sm font-medium text-green-600">
+                  <span>Lucky Wheel ({promoDiscount}%)</span>
+                  <span>-${(totalPrice * (promoDiscount / 100)).toFixed(2)}</span>
                 </div>
               )}
 
