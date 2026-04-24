@@ -11,17 +11,19 @@ export async function getDatabaseStats() {
       customerCount,
       staffCount,
       serviceCount,
-      promotionCount
+      promotionCount,
+      couponCount,
+      settingsCount
     ] = await Promise.all([
       prisma.tenant.count(),
       prisma.booking.count(),
       prisma.customer.count(),
       prisma.staff.count(),
       prisma.service.count(),
-      prisma.promotionClaim.count()
+      prisma.promotionClaim.count(),
+      prisma.coupon.count(),
+      prisma.systemSettings.count()
     ]);
-
-    console.log("Stats fetched successfully:", { tenantCount, bookingCount, promotionCount });
 
     return {
       success: true,
@@ -31,45 +33,43 @@ export async function getDatabaseStats() {
         customers: customerCount,
         staff: staffCount,
         services: serviceCount,
-        promotions: promotionCount
+        promotions: promotionCount,
+        coupons: couponCount,
+        settings: settingsCount
       }
     };
   } catch (error) {
-    console.error("Failed to fetch database stats in action:", error);
-    return { success: false, error: error instanceof Error ? error.message : "Failed to fetch database statistics" };
+    console.error("Failed to fetch database stats:", error);
+    return { success: false, error: "Failed to fetch database statistics" };
   }
 }
 
 export async function exportFullDatabase() {
-  console.log("exportFullDatabase action called");
   try {
-    // Fetch all tables
     const [
       tenants,
       bookings,
       customers,
       staff,
       services,
-      promotions
+      promotions,
+      coupons,
+      settings
     ] = await Promise.all([
       prisma.tenant.findMany(),
       prisma.booking.findMany(),
       prisma.customer.findMany(),
       prisma.staff.findMany(),
       prisma.service.findMany(),
-      prisma.promotionClaim.findMany()
+      prisma.promotionClaim.findMany(),
+      prisma.coupon.findMany(),
+      prisma.systemSettings.findMany()
     ]);
-
-    console.log("Database exported successfully, row counts:", {
-      tenants: tenants.length,
-      bookings: bookings.length,
-      promotions: promotions.length
-    });
 
     return {
       success: true,
       data: {
-        version: "1.1",
+        version: "1.2",
         timestamp: new Date().toISOString(),
         tables: {
           tenants,
@@ -77,12 +77,77 @@ export async function exportFullDatabase() {
           customers,
           staff,
           services,
-          promotions
+          promotions,
+          coupons,
+          settings
         }
       }
     };
   } catch (error) {
-    console.error("Failed to export database in action:", error);
-    return { success: false, error: error instanceof Error ? error.message : "Failed to export database" };
+    console.error("Failed to export database:", error);
+    return { success: false, error: "Failed to export database" };
+  }
+}
+
+export async function importDatabase(data: any) {
+  if (!data) return { success: false, error: "Invalid backup data format" };
+  
+  try {
+    // Handle both wrapped format (UI) and flat format (CLI script)
+    const tables = data.tables || data;
+    
+    const { 
+      tenants, tenant,
+      bookings, booking,
+      customers, customer,
+      staff,
+      services, service,
+      promotions, promotionClaim,
+      coupons, coupon,
+      settings, systemSettings 
+    } = tables;
+
+    // Use a transaction to ensure data integrity
+    await prisma.$transaction(async (tx) => {
+      // 1. Clear everything (Order matters due to FK constraints)
+      await tx.promotionClaim.deleteMany();
+      await tx.coupon.deleteMany();
+      await tx.booking.deleteMany();
+      await tx.customer.deleteMany();
+      await tx.staff.deleteMany();
+      await tx.service.deleteMany();
+      await tx.tenant.deleteMany();
+      await tx.systemSettings.deleteMany();
+
+      // 2. Re-populate (Order matters: Parent tables first)
+      const s = settings || systemSettings;
+      if (s?.length) await tx.systemSettings.createMany({ data: s });
+      
+      const t = tenants || tenant;
+      if (t?.length) await tx.tenant.createMany({ data: t });
+      
+      const sv = services || service;
+      if (sv?.length) await tx.service.createMany({ data: sv });
+      
+      const st = staff; // already plural in script? wait, script uses staff
+      if (st?.length) await tx.staff.createMany({ data: st });
+      
+      const c = customers || customer;
+      if (c?.length) await tx.customer.createMany({ data: c });
+      
+      const b = bookings || booking;
+      if (b?.length) await tx.booking.createMany({ data: b });
+      
+      const cp = coupons || coupon;
+      if (cp?.length) await tx.coupon.createMany({ data: cp });
+      
+      const p = promotions || promotionClaim;
+      if (p?.length) await tx.promotionClaim.createMany({ data: p });
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Database import failed:", error);
+    return { success: false, error: error.message || "Failed to import database" };
   }
 }
