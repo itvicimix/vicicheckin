@@ -1,3 +1,7 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import { Settings, Save, Clock, Calendar, MapPin, Phone, Palette, Loader2, CheckCircle, DollarSign, Share2, MessageSquare } from "lucide-react";
 import { getTenantBySlug, updateTenantSettings } from "@/actions/tenant";
 
