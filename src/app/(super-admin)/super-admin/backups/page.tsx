@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Database, Download, AlertTriangle, ShieldCheck, HardDrive, RefreshCw, Upload, FileJson } from "lucide-react";
 import { getDatabaseStats, exportFullDatabase, importDatabase } from "@/actions/database";
 
