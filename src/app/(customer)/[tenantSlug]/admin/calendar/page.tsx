@@ -227,7 +227,7 @@ export default function CalendarPage() {
     // Check database for valid coupons
     try {
       const result = await validateCoupon(tenant.id, promoCode);
-      if (result.success) {
+      if (result.success && result.coupon) {
         const coupon = result.coupon;
         const subtotal = bookingItems.reduce((acc, item) => {
           const service = services.find(s => s.id === item.serviceId);

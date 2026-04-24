@@ -32,11 +32,11 @@ export function StepConfirm({ tenant }: { tenant: any }) {
     setIsValidating(true);
     try {
       const result = await validateCoupon(tenant.id, promoCode);
-      if (result.success) {
+      if (result.success && result.coupon) {
         state.setCouponDiscount(result.coupon.discountValue);
         alert(`Success! ${result.coupon.name} applied: ${result.coupon.discountValue}% off.`);
       } else {
-        alert(result.error);
+        alert(result.error || "Mã giảm giá không hợp lệ");
         state.setCouponDiscount(0);
       }
     } catch (err) {

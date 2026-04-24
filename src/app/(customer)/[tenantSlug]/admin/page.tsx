@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { getCustomers } from "@/actions/customer";
 import { getBookings, updateBookingStatus } from "@/actions/booking";
-import { getTenantBySlug } from "@/actions/tenant";
+import { getTenantBySlug, updateLuckyWheel } from "@/actions/tenant";
 import { sendSMSPromotion } from "@/actions/sms";
 
 export default function AdminDashboardPage() {
