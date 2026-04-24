@@ -66,3 +66,25 @@ export async function updateService(id: string, data: any) {
     return { success: false, error: "Lỗi hệ thống khi cập nhật" };
   }
 }
+
+export async function importServices(tenantId: string, services: any[]) {
+  try {
+    const dataToCreate = services.map(s => ({
+      tenantId,
+      name: s.name,
+      price: parseFloat(s.price) || 0,
+      duration: parseInt(s.duration) || 30,
+      category: s.category || "General",
+    }));
+
+    await prisma.service.createMany({
+      data: dataToCreate
+    });
+
+    revalidatePath("/[tenantSlug]/admin/services", "page");
+    return { success: true, count: dataToCreate.length };
+  } catch (error) {
+    console.error("Failed to import services:", error);
+    return { success: false, error: "Lỗi hệ thống khi import dịch vụ" };
+  }
+}

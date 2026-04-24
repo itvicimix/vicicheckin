@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { Plus, Edit2, Trash2, Search, Loader2 } from "lucide-react";
-import { getServices, createService, deleteService, updateService } from "@/actions/service";
+import { Plus, Edit2, Trash2, Search, Loader2, Upload, FileJson } from "lucide-react";
+import { getServices, createService, deleteService, updateService, importServices } from "@/actions/service";
 import { getTenantBySlug } from "@/actions/tenant";
 
 export default function ServicesPage() {
@@ -14,6 +14,7 @@ export default function ServicesPage() {
   const [tenant, setTenant] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [categories, setCategories] = useState(["Nails", "Spa", "Hair"]);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -139,6 +140,46 @@ export default function ServicesPage() {
     }
   };
 
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !tenant) return;
+
+    setIsImporting(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const json = JSON.parse(event.target?.result as string);
+          // Look for 'services' key or assume flat array
+          const servicesToImport = Array.isArray(json) ? json : (json.services || json.service || []);
+          
+          if (servicesToImport.length === 0) {
+            alert("No services found in file");
+            return;
+          }
+
+          const result = await importServices(tenant.id, servicesToImport);
+          if (result.success) {
+            alert(`Successfully imported ${result.count} services!`);
+            const updated = await getServices(tenant.id);
+            setServices(updated);
+          } else {
+            alert("Import failed: " + result.error);
+          }
+        } catch (err) {
+          alert("Invalid JSON file");
+        } finally {
+          setIsImporting(false);
+          e.target.value = "";
+        }
+      };
+      reader.readAsText(file);
+    } catch (error) {
+      alert("Error reading file");
+      setIsImporting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
@@ -166,6 +207,13 @@ export default function ServicesPage() {
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
             />
           </div>
+          
+          <label className={`bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 text-sm cursor-pointer whitespace-nowrap ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
+            {isImporting ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
+            Import
+            <input type="file" accept=".json" onChange={handleImport} className="hidden" />
+          </label>
+
           <button 
             onClick={() => { setShowAddForm(!showAddForm); setEditingService(null); }}
             className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 text-sm whitespace-nowrap"
