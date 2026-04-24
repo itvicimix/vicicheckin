@@ -18,6 +18,10 @@ export default function ServicesPage() {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   
+  // Delete Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
+  
   // Edit State
   const [editingService, setEditingService] = useState<any>(null);
   
@@ -110,8 +114,14 @@ export default function ServicesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this service?")) return;
+  const promptDelete = (id: string) => {
+    setServiceToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!serviceToDelete) return;
+    const id = serviceToDelete;
     
     try {
       const result = await deleteService(id);
@@ -123,6 +133,9 @@ export default function ServicesPage() {
     } catch (error) {
       console.error(error);
       alert("Failed to delete service");
+    } finally {
+      setDeleteModalOpen(false);
+      setServiceToDelete(null);
     }
   };
 
@@ -289,7 +302,7 @@ export default function ServicesPage() {
                         <Edit2 size={18} />
                       </button>
                       <button 
-                        onClick={() => handleDelete(service.id)}
+                        onClick={() => promptDelete(service.id)}
                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         <Trash2 size={18} />
@@ -333,7 +346,7 @@ export default function ServicesPage() {
                   Edit
                 </button>
                 <button 
-                  onClick={() => handleDelete(service.id)}
+                  onClick={() => promptDelete(service.id)}
                   className="flex-1 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium text-xs rounded-lg transition-colors border border-red-100"
                 >
                   Delete
@@ -343,6 +356,32 @@ export default function ServicesPage() {
           ))
         )}
       </div>
+
+      {/* Custom Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200 border border-gray-100">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Service</h3>
+            <p className="text-gray-500 text-sm mb-8">
+              Are you sure you want to delete this service? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => { setDeleteModalOpen(false); setServiceToDelete(null); }}
+                className="px-6 py-2.5 bg-[#f3e8ff] text-[#6b21a8] hover:bg-[#e9d5ff] font-semibold rounded-2xl transition-colors text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-6 py-2.5 bg-[#7e57c2] hover:bg-[#673ab7] text-white font-semibold rounded-2xl transition-all text-sm shadow-sm ring-2 ring-offset-2 ring-[#7e57c2]"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

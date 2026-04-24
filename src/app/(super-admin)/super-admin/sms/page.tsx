@@ -2,16 +2,21 @@
 
 import { MessageSquareQuote, KeyRound, Save, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getSystemSettings, updateTwilioSettings } from "@/actions/settings";
+import { getSystemSettings, updateTwilioSettings, updateSMSTemplates } from "@/actions/settings";
 
 export default function SMSConfigPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingTemplates, setIsSavingTemplates] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   const [twilioSid, setTwilioSid] = useState("");
   const [twilioAuthToken, setTwilioAuthToken] = useState("");
   const [twilioPhone, setTwilioPhone] = useState("");
+
+  const [pendingTemplate, setPendingTemplate] = useState("Hello %customer_full_name%, your booking for %service_name% at %tenant_name% is PENDING for %appointment_start_time%. We will notify you once approved.");
+  const [approvedTemplate, setApprovedTemplate] = useState("Hi %customer_full_name%, your appointment for %service_name% at %tenant_name% on %appointment_start_time% has been APPROVED! See you then.");
+  const [rejectedTemplate, setRejectedTemplate] = useState("Hi %customer_full_name%, unfortunately your appointment for %service_name% at %tenant_name% on %appointment_start_time% has been REJECTED. Please contact us for more info.");
 
   useEffect(() => {
     async function fetchSettings() {
@@ -20,6 +25,9 @@ export default function SMSConfigPage() {
         setTwilioSid(settings.twilioSid || "");
         setTwilioAuthToken(settings.twilioAuthToken || "");
         setTwilioPhone(settings.twilioPhone || "");
+        if (settings.pendingSmsTemplate) setPendingTemplate(settings.pendingSmsTemplate);
+        if (settings.approvedSmsTemplate) setApprovedTemplate(settings.approvedSmsTemplate);
+        if (settings.rejectedSmsTemplate) setRejectedTemplate(settings.rejectedSmsTemplate);
       }
       setIsLoading(false);
     }
@@ -36,10 +44,26 @@ export default function SMSConfigPage() {
     setIsSaving(false);
     
     if (result.success) {
-      alert("Đã lưu cấu hình Twilio thành công!");
+      alert("Twilio configuration saved successfully!");
       setIsEditing(false);
     } else {
-      alert("Lỗi khi lưu cấu hình: " + result.error);
+      alert("Error saving configuration: " + result.error);
+    }
+  };
+
+  const handleSaveTemplates = async () => {
+    setIsSavingTemplates(true);
+    const result = await updateSMSTemplates({
+      pendingSmsTemplate: pendingTemplate,
+      approvedSmsTemplate: approvedTemplate,
+      rejectedSmsTemplate: rejectedTemplate,
+    });
+    setIsSavingTemplates(false);
+    
+    if (result.success) {
+      alert("SMS templates saved successfully!");
+    } else {
+      alert("Error saving templates: " + result.error);
     }
   };
 
@@ -138,26 +162,44 @@ export default function SMSConfigPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Customer Confirmation Template</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Customer Pending Template</label>
             <textarea 
               rows={3} 
-              defaultValue="Hello %customer_full_name%, your booking for %service_name% at %tenant_name% is confirmed for %appointment_start_time%. Thank you!"
+              value={pendingTemplate}
+              onChange={(e) => setPendingTemplate(e.target.value)}
               className="w-full bg-gray-900 border border-gray-700 rounded-lg p-4 text-white focus:border-blue-500 outline-none resize-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Owner Notification Template</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Customer Approved Template</label>
             <textarea 
-              rows={2} 
-              defaultValue="New booking: %customer_full_name% booked %service_name% on %appointment_start_time%."
+              rows={3} 
+              value={approvedTemplate}
+              onChange={(e) => setApprovedTemplate(e.target.value)}
               className="w-full bg-gray-900 border border-gray-700 rounded-lg p-4 text-white focus:border-blue-500 outline-none resize-none"
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Customer Rejected Template</label>
+            <textarea 
+              rows={3} 
+              value={rejectedTemplate}
+              onChange={(e) => setRejectedTemplate(e.target.value)}
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg p-4 text-white focus:border-blue-500 outline-none resize-none"
+            />
+          </div>
+
+
           <div className="flex justify-end pt-4">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors flex items-center gap-2">
-              <Save size={18} /> Save Templates
+            <button 
+              onClick={handleSaveTemplates}
+              disabled={isSavingTemplates}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+            >
+              {isSavingTemplates ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save size={18} />}
+              Save Templates
             </button>
           </div>
         </div>

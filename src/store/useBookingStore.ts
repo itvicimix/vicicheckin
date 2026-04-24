@@ -23,6 +23,7 @@ interface BookingState {
   customerInfo: {
     fullName: string;
     phone: string;
+    countryCode: string;
     notes?: string;
   };
   paymentMethod: 'in_store' | 'credit_card' | 'paypal' | null;
@@ -32,6 +33,8 @@ interface BookingState {
     discountPercentage: number;
   } | null;
   promotionPrize: string | null;
+  couponDiscount: number; // Percentage
+
 
   // Actions
   nextStep: () => void;
@@ -41,10 +44,12 @@ interface BookingState {
   setStaff: (staff: Staff | null) => void;
   setDateTime: (date: Date, time: string) => void;
   setGuests: (count: number) => void;
-  setCustomerInfo: (info: { fullName: string; phone: string; notes?: string }) => void;
+  setCustomerInfo: (info: { fullName: string; phone: string; countryCode: string; notes?: string }) => void;
   setPaymentMethod: (method: 'in_store' | 'credit_card' | 'paypal') => void;
   setLoyaltyStatus: (status: BookingState['loyaltyStatus']) => void;
   setPromotionPrize: (prize: string | null) => void;
+  setCouponDiscount: (discount: number) => void;
+
   reset: () => void;
 }
 
@@ -55,10 +60,12 @@ export const useBookingStore = create<BookingState>((set) => ({
   selectedDate: null,
   selectedTime: null,
   guests: 1,
-  customerInfo: { fullName: '', phone: '' },
+  customerInfo: { fullName: '', phone: '', countryCode: '+1' },
   paymentMethod: null,
   loyaltyStatus: null,
   promotionPrize: null,
+  couponDiscount: 0,
+
 
   nextStep: () => set((state) => ({ step: state.step + 1 })),
   prevStep: () => set((state) => ({ step: Math.max(1, state.step - 1) })),
@@ -78,6 +85,8 @@ export const useBookingStore = create<BookingState>((set) => ({
   setPaymentMethod: (method) => set({ paymentMethod: method }),
   setLoyaltyStatus: (status) => set({ loyaltyStatus: status }),
   setPromotionPrize: (prize) => set({ promotionPrize: prize }),
+  setCouponDiscount: (discount) => set({ couponDiscount: discount }),
+
   reset: () =>
     set({
       step: 1,
@@ -86,9 +95,11 @@ export const useBookingStore = create<BookingState>((set) => ({
       selectedDate: null,
       selectedTime: null,
       guests: 1,
-      customerInfo: { fullName: '', phone: '' },
+      customerInfo: { fullName: '', phone: '', countryCode: '+1' },
       paymentMethod: null,
       loyaltyStatus: null,
       promotionPrize: null,
+      couponDiscount: 0,
     }),
+
 }));

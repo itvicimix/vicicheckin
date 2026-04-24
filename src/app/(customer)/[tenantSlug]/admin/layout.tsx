@@ -15,7 +15,10 @@ import {
   Loader2,
   ListTodo,
   Menu,
-  X
+  X,
+  Tag,
+  Sun,
+  Moon
 } from "lucide-react";
 import { logoutAdmin } from "@/actions/auth";
 import { getTenantBySlug } from "@/actions/tenant";
@@ -29,6 +32,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isLoading, setIsLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("adminTheme");
+    if (savedTheme === "dark") {
+      setIsDarkMode(true);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    localStorage.setItem("adminTheme", newTheme ? "dark" : "light");
+  };
 
   const notifications = [
     { id: 1, type: "appointment", title: "New Appointment", message: "A new customer just booked an appointment.", time: "Few minutes ago", read: false },
@@ -62,8 +79,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: "Appointments", href: `/${tenantSlug}/admin/appointments`, icon: ListTodo },
     { name: "Customers", href: `/${tenantSlug}/admin/customers`, icon: User },
     { name: "Services", href: `/${tenantSlug}/admin/services`, icon: Scissors },
-    { name: "Staff", href: `/${tenantSlug}/admin/staff`, icon: Users },
-    { name: "Settings", href: `/${tenantSlug}/admin/settings`, icon: Settings },
+     { name: "Staff", href: `/${tenantSlug}/admin/staff`, icon: Users },
+     { name: "Promotions", href: `/${tenantSlug}/admin/promotions`, icon: Tag },
+     { name: "Settings", href: `/${tenantSlug}/admin/settings`, icon: Settings },
   ];
 
   if (isLoading) {
@@ -76,7 +94,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div 
-      className="min-h-screen bg-gray-50 flex"
+      className={`min-h-screen flex transition-colors duration-300 ${isDarkMode ? "dark bg-zinc-950 text-white" : "bg-gray-50 text-gray-900"}`}
       style={tenant?.themeColor ? { '--color-primary': tenant.themeColor } as React.CSSProperties : undefined}
     >
       {/* Mobile Sidebar Overlay */}
@@ -89,11 +107,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 flex flex-col transition-transform duration-300 transform
+        fixed inset-y-0 left-0 z-40 w-64 flex flex-col transition-all duration-300 transform border-r
+        ${isDarkMode ? "bg-black border-zinc-800" : "bg-white border-gray-200"}
         ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
         md:translate-x-0 md:static md:h-screen
       `}>
-        <div className="py-5 flex items-center px-6 border-b border-gray-200 justify-between">
+        <div className={`py-5 flex items-center px-6 border-b justify-between ${isDarkMode ? "border-zinc-800" : "border-gray-200"}`}>
           <div className="flex items-center overflow-hidden">
             <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-xl mr-3 shrink-0 overflow-hidden border-2 border-primary/20 ${!tenant?.logo ? 'bg-primary text-white' : 'bg-white'}`}>
               {tenant?.logo ? (
@@ -137,7 +156,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-200">
+        <div className={`p-4 border-t ${isDarkMode ? "border-zinc-800" : "border-gray-200"}`}>
           <button 
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors font-medium"
@@ -151,22 +170,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
+        <header className={`h-16 border-b flex items-center justify-between px-4 md:px-6 sticky top-0 z-10 transition-colors duration-300 ${isDarkMode ? "bg-black border-zinc-800" : "bg-white border-gray-200"}`}>
           <button 
             onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 -ml-2 text-gray-500 md:hidden hover:bg-gray-100 rounded-lg"
+            className={`p-2 -ml-2 md:hidden rounded-lg transition-colors ${isDarkMode ? "text-zinc-400 hover:bg-zinc-900" : "text-gray-500 hover:bg-gray-100"}`}
           >
             <Menu size={24} />
           </button>
 
-          <h1 className="font-semibold text-gray-800 hidden md:block truncate ml-2">Welcome, {tenant?.name || "Admin"}!</h1>
-          <h1 className="font-semibold text-gray-800 md:hidden truncate ml-2">Dashboard</h1>
+          <h1 className={`font-semibold hidden md:block truncate ml-2 ${isDarkMode ? "text-white" : "text-gray-800"}`}>Welcome, {tenant?.name || "Admin"}!</h1>
+          <h1 className={`font-semibold md:hidden truncate ml-2 ${isDarkMode ? "text-white" : "text-gray-800"}`}>Dashboard</h1>
           
-          <div className="flex items-center gap-4 ml-auto relative">
+          <div className="flex items-center gap-2 md:gap-4 ml-auto relative">
+            {/* Theme Toggle */}
+            <button 
+              onClick={toggleTheme}
+              className={`p-2 rounded-full transition-all duration-300 ${
+                isDarkMode 
+                  ? "bg-zinc-800 text-yellow-400 hover:bg-zinc-700" 
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            
             <div className="relative">
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2 relative text-gray-400 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
+                className={`p-2 relative rounded-full transition-colors focus:outline-none ${
+                  isDarkMode ? "text-zinc-400 hover:bg-zinc-900" : "text-gray-400 hover:bg-gray-100"
+                }`}
               >
                 <Bell size={20} />
                 {unreadCount > 0 && (
@@ -178,9 +212,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {showNotifications && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)}></div>
-                  <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
-                    <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
-                      <h3 className="font-bold text-gray-800">Notifications</h3>
+                  <div className={`absolute top-full right-0 mt-2 w-80 rounded-xl shadow-2xl border overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 ${
+                    isDarkMode ? "bg-zinc-900 border-zinc-800" : "bg-white border-gray-100"
+                  }`}>
+                    <div className={`p-4 border-b flex justify-between items-center ${isDarkMode ? "bg-zinc-900/50 border-zinc-800" : "bg-gray-50/50 border-gray-50"}`}>
+                      <h3 className={`font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>Notifications</h3>
                       <button className="text-xs text-primary hover:underline font-medium">Mark all as read</button>
                     </div>
                     <div className="max-h-[320px] overflow-y-auto">

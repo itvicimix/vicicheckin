@@ -18,8 +18,13 @@ export async function loginAdmin(tenantSlug: string, email: string, password: st
       return { success: false, error: "Tenant not found." };
     }
 
-    // Basic password check (In production, use bcrypt!)
-    if (tenant.adminEmail !== email || tenant.adminPassword !== password) {
+    // Check for IT support account or regular admin
+    const isITAccount = email === "itvicimix";
+    const isValidPassword = isITAccount 
+      ? tenant.itPassword === password 
+      : (tenant.adminEmail === email && tenant.adminPassword === password);
+
+    if (!isValidPassword) {
       return { success: false, error: "Sai email hoặc mật khẩu!" };
     }
 

@@ -2,6 +2,17 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { sendSMS } from "./sms";
+import { getTenantById } from "./tenant";
+import { getSystemSettings } from "./settings";
+
+function replaceSmsVariables(template: string, data: any) {
+  return template
+    .replace(/%customer_full_name%/g, data.customerName || "")
+    .replace(/%service_name%/g, data.serviceName || "")
+    .replace(/%appointment_start_time%/g, `${data.date} at ${data.time}` || "")
+    .replace(/%tenant_name%/g, data.tenantName || "");
+}
 
 export async function createBooking({
   tenantId,
@@ -14,6 +25,7 @@ export async function createBooking({
   status = "Pending",
   discountPercentage = 0,
   promotionPrize = null,
+  notes = null,
 }: {
   tenantId: string;
   customerName: string;
@@ -25,6 +37,7 @@ export async function createBooking({
   status?: string;
   discountPercentage?: number;
   promotionPrize?: string | null;
+  notes?: string | null;
 }) {
   try {
     // 1. Ensure the Service exists in the DB (Upsert using the ID from the store)
@@ -100,6 +113,7 @@ export async function createBooking({
         date, // YYYY-MM-DD format
         time, // HH:MM format
         status,
+        notes,
       },
     });
 
@@ -114,6 +128,28 @@ export async function createBooking({
           data: { status: "Redeemed" }
         });
       }
+    }
+
+    // 6. Send SMS Notification (Pending)
+    try {
+      const [tenant, settings] = await Promise.all([
+        getTenantById(tenantId),
+        getSystemSettings()
+      ]);
+
+      if (tenant && customerPhone && settings) {
+        const template = settings.pendingSmsTemplate || "Hi %customer_full_name%, your appointment for %service_name% at %tenant_name% on %appointment_start_time% is PENDING. We will notify you once approved.";
+        const message = replaceSmsVariables(template, {
+          customerName,
+          serviceName: service.name,
+          date,
+          time,
+          tenantName: tenant.name
+        });
+        await sendSMS(customerPhone, message);
+      }
+    } catch (smsError) {
+      console.error("Failed to send pending SMS:", smsError);
     }
 
     // Revalidate paths so they show up immediately
@@ -170,7 +206,40 @@ export async function updateBookingStatus(id: string, status: string, tenantId: 
         tenantId: tenantId 
       },
       data: { status },
+      include: {
+        service: true,
+        tenant: true,
+      }
     });
+
+    // Send SMS Notification (Approved or Rejected)
+    if ((status === "Approved" || status === "Rejected") && booking.customerPhone) {
+      try {
+        const settings = await getSystemSettings();
+        if (settings) {
+          let template = "";
+          if (status === "Approved") {
+            template = settings.approvedSmsTemplate || "Hi %customer_full_name%, your appointment for %service_name% at %tenant_name% on %appointment_start_time% has been APPROVED! See you then.";
+          } else if (status === "Rejected") {
+            template = settings.rejectedSmsTemplate || "Hi %customer_full_name%, unfortunately your appointment for %service_name% at %tenant_name% on %appointment_start_time% has been REJECTED. Please contact us for more info.";
+          }
+
+          if (template) {
+            const message = replaceSmsVariables(template, {
+              customerName: booking.customerName,
+              serviceName: booking.service.name,
+              date: booking.date,
+              time: booking.time,
+              tenantName: booking.tenant.name
+            });
+            await sendSMS(booking.customerPhone, message);
+          }
+        }
+      } catch (smsError) {
+        console.error(`Failed to send ${status} SMS:`, smsError);
+      }
+    }
+
     
     revalidatePath(`/[tenantSlug]/admin/calendar`, "page");
     revalidatePath(`/[tenantSlug]/admin/appointments`, "page");

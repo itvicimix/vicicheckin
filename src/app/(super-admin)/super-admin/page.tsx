@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Link as LinkIcon, Edit2, ShieldAlert, X, Download, DollarSign, CalendarCheck, Users as UsersIcon, Scissors as ScissorsIcon, Save, Loader2 } from "lucide-react";
+import { Plus, Link as LinkIcon, Edit2, ShieldAlert, X, Download, DollarSign, CalendarCheck, Users as UsersIcon, Scissors as ScissorsIcon, Save, Loader2, Tag } from "lucide-react";
 import { getTenants, createTenant } from "@/actions/tenant";
+import { getCoupons } from "@/actions/coupon";
 
 export default function TenantsPage() {
   const [showForm, setShowForm] = useState(false);
@@ -13,7 +14,17 @@ export default function TenantsPage() {
   const [tenants, setTenants] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [couponCount, setCouponCount] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const generatePass = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Removed ambiguous chars like I, O, 1, 0
+    let result = "";
+    for (let i = 0; i < 10; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result + "!";
+  };
 
   // Create form state
   const [formData, setFormData] = useState({
@@ -21,6 +32,7 @@ export default function TenantsPage() {
     slug: "",
     adminEmail: "",
     adminPassword: "TempPass123!",
+    itPassword: generatePass(),
     themeColor: "#724677",
     location: "",
     phone: ""
@@ -41,6 +53,12 @@ export default function TenantsPage() {
   useEffect(() => {
     loadTenants();
   }, []);
+
+  useEffect(() => {
+    if (selectedTenant) {
+      getCoupons(selectedTenant.id).then(coupons => setCouponCount(coupons.length));
+    }
+  }, [selectedTenant]);
 
   const togglePayment = (method: keyof typeof payments) => {
     setPayments(prev => ({ ...prev, [method]: !prev[method] }));
@@ -67,12 +85,48 @@ export default function TenantsPage() {
     if (result.success) {
       setShowForm(false);
       setFormData({
-        name: "", slug: "", adminEmail: "", adminPassword: "TempPass123!", themeColor: "#724677", location: "", phone: ""
+        name: "", 
+        slug: "", 
+        adminEmail: "", 
+        adminPassword: "TempPass123!", 
+        itPassword: generatePass(),
+        themeColor: "#724677", 
+        location: "", 
+        phone: ""
       });
       setPayments({ payInStore: true, creditCard: false, paypal: false });
       loadTenants(); // Refresh list
     } else {
       setErrorMsg(result.error || "An error occurred");
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleUpdateConfig = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!selectedTenant) return;
+    
+    setIsSubmitting(true);
+    const form = e.currentTarget;
+    const updatedData = {
+      name: (form.elements.namedItem("name") as HTMLInputElement).value,
+      adminEmail: (form.elements.namedItem("adminEmail") as HTMLInputElement).value,
+      adminPassword: (form.elements.namedItem("adminPassword") as HTMLInputElement).value,
+      itPassword: (form.elements.namedItem("itPassword") as HTMLInputElement).value,
+      location: (form.elements.namedItem("location") as HTMLInputElement).value,
+      phone: (form.elements.namedItem("phone") as HTMLInputElement).value,
+      themeColor: selectedTenant.themeColor, // Keep existing if not changed in this simple form
+    };
+
+    const { updateTenantSettings } = await import("@/actions/tenant");
+    const res = await updateTenantSettings(selectedTenant.id, updatedData);
+    
+    if (res.success) {
+      setShowEditConfig(false);
+      setSelectedTenant(res.data);
+      loadTenants();
+    } else {
+      alert(res.error || "Failed to update configuration");
     }
     setIsSubmitting(false);
   };
@@ -135,6 +189,31 @@ export default function TenantsPage() {
             <div>
               <label className="block text-sm text-gray-400 mb-1">Phone Number</label>
               <input type="text" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="e.g., (555) 123-4567" className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white focus:border-blue-500 outline-none transition-colors" />
+            </div>
+            
+            <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl space-y-3">
+              <div className="flex items-center gap-2 text-blue-400 font-bold text-xs uppercase tracking-wider">
+                <ShieldAlert size={14} /> IT System Account
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Username (Default)</label>
+                  <input type="text" value="itvicimix" disabled className="w-full bg-gray-900/50 border border-gray-700 rounded-lg p-2 text-gray-500 text-sm cursor-not-allowed" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1 flex justify-between">
+                    Generated IT Password
+                    <button 
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, itPassword: generatePass() }))}
+                      className="text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      Regenerate
+                    </button>
+                  </label>
+                  <input type="text" name="itPassword" value={formData.itPassword} onChange={handleInputChange} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-white text-sm focus:border-blue-500 outline-none font-mono" />
+                </div>
+              </div>
             </div>
             
             {/* Payment Methods */}
@@ -283,8 +362,8 @@ export default function TenantsPage() {
                   <div className="text-2xl font-bold text-white">0</div>
                 </div>
                 <div className="bg-gray-900 border border-gray-700 p-4 rounded-xl flex flex-col">
-                  <div className="text-gray-400 text-sm mb-1 flex items-center gap-1.5"><ScissorsIcon size={16} className="text-orange-400" /> Services</div>
-                  <div className="text-2xl font-bold text-white">0</div>
+                  <div className="text-gray-400 text-sm mb-1 flex items-center gap-1.5"><Tag size={16} className="text-pink-400" /> Coupons</div>
+                  <div className="text-2xl font-bold text-white">{couponCount}</div>
                 </div>
               </div>
 
@@ -337,40 +416,69 @@ export default function TenantsPage() {
                 {/* Edit Configuration Popup (Nested Modal) */}
                 {showEditConfig && (
                   <div className="absolute inset-0 bg-gray-800/95 backdrop-blur-md z-10 rounded-2xl border border-gray-700 shadow-2xl p-6 flex flex-col animate-in zoom-in-95">
-                    <div className="flex justify-between items-center mb-5">
-                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        <Edit2 size={18} className="text-blue-400" /> Edit Configuration
-                      </h3>
-                      <button onClick={() => setShowEditConfig(false)} className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
-                        <X size={18} />
-                      </button>
-                    </div>
-                    
-                    <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-1">Admin Email</label>
-                        <input type="email" defaultValue={selectedTenant.adminEmail} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none" />
+                    <form onSubmit={handleUpdateConfig} className="flex flex-col h-full">
+                      <div className="flex justify-between items-center mb-5">
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                          <Edit2 size={18} className="text-blue-400" /> Edit Configuration
+                        </h3>
+                        <button type="button" onClick={() => setShowEditConfig(false)} className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
+                          <X size={18} />
+                        </button>
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-1">Admin Password</label>
-                        <input type="text" defaultValue={selectedTenant.adminPassword} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm font-mono focus:border-blue-500 outline-none" />
+                      
+                      <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1">Salon Name</label>
+                            <input type="text" name="name" defaultValue={selectedTenant.name} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1">Admin Email</label>
+                            <input type="email" name="adminEmail" defaultValue={selectedTenant.adminEmail} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1">Admin Password</label>
+                            <input type="text" name="adminPassword" defaultValue={selectedTenant.adminPassword} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm font-mono focus:border-blue-500 outline-none" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1 flex justify-between">
+                              IT Account Password (itvicimix)
+                              <button 
+                                type="button"
+                                onClick={(e) => {
+                                  const input = e.currentTarget.parentElement?.nextElementSibling as HTMLInputElement;
+                                  if (input) input.value = generatePass();
+                                }}
+                                className="text-blue-400 hover:text-blue-300 transition-colors"
+                              >
+                                Generate New
+                              </button>
+                            </label>
+                            <input type="text" name="itPassword" defaultValue={selectedTenant.itPassword || generatePass()} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm font-mono focus:border-blue-500 outline-none" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1">Location</label>
+                            <input type="text" name="location" defaultValue={selectedTenant.location} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1">Phone Number</label>
+                            <input type="text" name="phone" defaultValue={selectedTenant.phone} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none" />
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-1">Location</label>
-                        <input type="text" defaultValue={selectedTenant.location} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none" />
+                      
+                      <div className="mt-5 pt-4 border-t border-gray-700 flex justify-end gap-2">
+                        <button type="button" onClick={() => setShowEditConfig(false)} className="px-3 py-2 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
+                        <button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50">
+                          {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} 
+                          Save Changes
+                        </button>
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-400 mb-1">Phone Number</label>
-                        <input type="text" defaultValue={selectedTenant.phone} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none" />
-                      </div>
-                    </div>
-                    
-                    <div className="mt-5 pt-4 border-t border-gray-700 flex justify-end gap-2">
-                      <button onClick={() => setShowEditConfig(false)} className="px-3 py-2 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
-                      <button onClick={() => setShowEditConfig(false)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5">
-                        <Save size={16} /> Save Changes
-                      </button>
-                    </div>
+                    </form>
                   </div>
                 )}
 

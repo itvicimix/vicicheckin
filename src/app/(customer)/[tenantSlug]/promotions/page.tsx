@@ -44,6 +44,8 @@ export default function PromotionsPage() {
     
     if (result.eligible) {
       setIsEligible(true);
+      // Save phone to localStorage for booking flow pre-fill
+      localStorage.setItem("customer_phone", phone);
     } else {
       if (result.reason === "already_customer") {
         setError("Rất tiếc! Số điện thoại này đã từng đặt hẹn nên không thể tham gia chương trình khách hàng mới.");
@@ -81,10 +83,20 @@ export default function PromotionsPage() {
     );
   }
 
-  if (!tenant) {
+  if (!tenant || !tenant.luckyWheelEnabled) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500">
-        Salon not found
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-center p-4">
+        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-400">
+          <AlertCircle size={40} />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Chương trình đã kết thúc</h2>
+        <p className="text-gray-500 max-w-md">Rất tiếc, hiện tại không có chương trình khuyến mãi nào đang diễn ra. Vui lòng quay lại sau!</p>
+        <button 
+          onClick={() => router.push(`/${tenantSlug}`)}
+          className="mt-6 text-primary font-bold hover:underline"
+        >
+          Quay lại trang chủ
+        </button>
       </div>
     );
   }
@@ -154,7 +166,12 @@ export default function PromotionsPage() {
             <div className="bg-green-50 text-green-700 font-medium py-2 px-4 rounded-full inline-block mb-4 text-sm">
               ✨ Chúc mừng! Bạn đủ điều kiện quay thưởng.
             </div>
-            <LuckyWheel onSpin={handleSpin} onFinish={handleFinish} color={tenant.themeColor || "#724677"} />
+            <LuckyWheel 
+              onSpin={handleSpin} 
+              onFinish={handleFinish} 
+              color={tenant.themeColor || "#724677"} 
+              prizes={tenant.luckyWheelConfig ? JSON.parse(tenant.luckyWheelConfig).map((p: any) => p.label) : []}
+            />
             
             {error && (
               <div className="mt-4 text-red-500 text-sm">{error}</div>

@@ -45,3 +45,28 @@ export async function updateTwilioSettings(data: { twilioSid: string; twilioAuth
     return { success: false, error: error.message };
   }
 }
+
+export async function updateSMSTemplates(data: { pendingSmsTemplate: string; approvedSmsTemplate: string; rejectedSmsTemplate: string }) {
+  try {
+    const settings = await prisma.systemSettings.upsert({
+      where: { id: 'global' },
+      update: {
+        pendingSmsTemplate: data.pendingSmsTemplate,
+        approvedSmsTemplate: data.approvedSmsTemplate,
+        rejectedSmsTemplate: data.rejectedSmsTemplate,
+      },
+      create: {
+        id: 'global',
+        pendingSmsTemplate: data.pendingSmsTemplate,
+        approvedSmsTemplate: data.approvedSmsTemplate,
+        rejectedSmsTemplate: data.rejectedSmsTemplate,
+      },
+    });
+    return { success: true, settings };
+  } catch (error: any) {
+
+    console.error('Error updating SMS templates:', error);
+    return { success: false, error: error.message };
+  }
+}
+

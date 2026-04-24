@@ -10,15 +10,16 @@ const PRIZES = [
   { name: "Free Makeup", weight: 5 },
 ];
 
-function getRandomPrize() {
-  const totalWeight = PRIZES.reduce((sum, prize) => sum + prize.weight, 0);
+function getRandomPrize(prizes: { label: string, probability: number }[]) {
+  const totalWeight = prizes.reduce((sum, prize) => sum + (parseFloat(prize.probability as any) || 0), 0);
   let random = Math.random() * totalWeight;
 
-  for (const prize of PRIZES) {
-    if (random < prize.weight) return prize.name;
-    random -= prize.weight;
+  for (const prize of prizes) {
+    const prob = parseFloat(prize.probability as any) || 0;
+    if (random < prob) return prize.label;
+    random -= prob;
   }
-  return PRIZES[0].name; // Fallback
+  return prizes[0].label; // Fallback
 }
 
 export async function checkEligibility(tenantId: string, phone: string) {
@@ -61,7 +62,22 @@ export async function claimPromotion(tenantId: string, phone: string) {
       return { success: false, error: eligibility.reason };
     }
 
-    const prize = getRandomPrize();
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { luckyWheelConfig: true }
+    });
+
+    let prize = "";
+    if (tenant?.luckyWheelConfig) {
+      try {
+        const config = JSON.parse(tenant.luckyWheelConfig);
+        prize = getRandomPrize(config);
+      } catch (e) {
+        prize = "5% Off"; // Fallback if parse fails
+      }
+    } else {
+      prize = "5% Off"; // Default fallback
+    }
 
     const claim = await prisma.promotionClaim.create({
       data: {

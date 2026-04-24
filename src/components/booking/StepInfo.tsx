@@ -1,24 +1,45 @@
 "use client";
 
 import { useBookingStore } from "@/store/useBookingStore";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { checkCustomerLoyalty } from "@/actions/loyalty";
 import { getUnusedPromotion } from "@/actions/promotion";
 import { Loader2, Award, Gift } from "lucide-react";
+
+const countryCodes = [
+  { code: "+1", label: "🇺🇸 +1" },
+  { code: "+84", label: "🇻🇳 +84" },
+  { code: "+44", label: "🇬🇧 +44" },
+  { code: "+61", label: "🇦🇺 +61" },
+  { code: "+33", label: "🇫🇷 +33" },
+  { code: "+49", label: "🇩🇪 +49" },
+  { code: "+81", label: "🇯🇵 +81" },
+  { code: "+82", label: "🇰🇷 +82" },
+];
 
 export function StepInfo({ tenant }: { tenant: any }) {
   const { customerInfo, setCustomerInfo, nextStep, setLoyaltyStatus, loyaltyStatus, setPromotionPrize, promotionPrize } = useBookingStore();
   const [localInfo, setLocalInfo] = useState(customerInfo);
   const [isCheckingLoyalty, setIsCheckingLoyalty] = useState(false);
 
-  const isValid = localInfo.fullName.trim().length > 0 && localInfo.phone.trim().length > 0;
+  useEffect(() => {
+    // Pre-fill phone if saved in localStorage (from Lucky Wheel)
+    const savedPhone = localStorage.getItem("customer_phone");
+    if (savedPhone && !localInfo.phone) {
+      setLocalInfo(prev => ({ ...prev, phone: savedPhone }));
+      // We'll trigger the loyalty check immediately for the saved phone
+      triggerLoyaltyCheck(savedPhone, localInfo.countryCode);
+    }
+  }, []);
 
-  const handlePhoneBlur = async () => {
-    if (localInfo.phone.trim().length < 10) return;
+  const triggerLoyaltyCheck = async (phone: string, countryCode: string) => {
+    if (phone.trim().length < 7) return;
     
     setIsCheckingLoyalty(true);
+    const fullPhone = `${countryCode}${phone.replace(/^0+/, '')}`;
+
     try {
-      const loyalty = await checkCustomerLoyalty(tenant.id, localInfo.phone);
+      const loyalty = await checkCustomerLoyalty(tenant.id, fullPhone);
       if (loyalty) {
         setLoyaltyStatus({
           tier: loyalty.tier,
@@ -26,15 +47,12 @@ export function StepInfo({ tenant }: { tenant: any }) {
           discountPercentage: loyalty.discountPercentage
         });
         
-        // Auto fill name if empty
-        if (!localInfo.fullName) {
-          setLocalInfo(prev => ({ ...prev, fullName: loyalty.name }));
-        }
+        setLocalInfo(prev => ({ ...prev, fullName: prev.fullName || loyalty.name }));
       } else {
         setLoyaltyStatus(null);
       }
 
-      const promotion = await getUnusedPromotion(tenant.id, localInfo.phone);
+      const promotion = await getUnusedPromotion(tenant.id, fullPhone);
       if (promotion) {
         setPromotionPrize(promotion.prize);
       } else {
@@ -46,6 +64,12 @@ export function StepInfo({ tenant }: { tenant: any }) {
       setIsCheckingLoyalty(false);
     }
   };
+
+  const handlePhoneBlur = () => {
+    triggerLoyaltyCheck(localInfo.phone, localInfo.countryCode);
+  };
+
+  const isValid = localInfo.fullName.trim().length > 0 && localInfo.phone.trim().length >= 7;
 
   const handleContinue = () => {
     if (isValid) {
@@ -90,20 +114,33 @@ export function StepInfo({ tenant }: { tenant: any }) {
         <div className="space-y-6 mt-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-            <div className="relative">
-              <input
-                type="tel"
-                value={localInfo.phone}
-                onChange={(e) => setLocalInfo({ ...localInfo, phone: e.target.value })}
-                onBlur={handlePhoneBlur}
-                placeholder="(555) 123-4567"
-                className="w-full p-4 rounded-xl border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-              />
-              {isCheckingLoyalty && (
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <Loader2 className="animate-spin text-primary w-5 h-5" />
-                </div>
-              )}
+            <div className="flex gap-2">
+              <div className="w-1/3">
+                <select
+                  value={localInfo.countryCode}
+                  onChange={(e) => setLocalInfo({ ...localInfo, countryCode: e.target.value })}
+                  className="w-full p-4 rounded-xl border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white"
+                >
+                  {countryCodes.map((c) => (
+                    <option key={c.code} value={c.code}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 relative">
+                <input
+                  type="tel"
+                  value={localInfo.phone}
+                  onChange={(e) => setLocalInfo({ ...localInfo, phone: e.target.value })}
+                  onBlur={handlePhoneBlur}
+                  placeholder="555-123-4567"
+                  className="w-full p-4 rounded-xl border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                />
+                {isCheckingLoyalty && (
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                    <Loader2 className="animate-spin text-primary w-5 h-5" />
+                  </div>
+                )}
+              </div>
             </div>
             <p className="text-xs text-gray-500 mt-2">Enter your phone number to check loyalty points.</p>
           </div>
@@ -132,6 +169,7 @@ export function StepInfo({ tenant }: { tenant: any }) {
         </div>
 
       </div>
+
 
       <div className="absolute bottom-0 left-0 w-full p-6 bg-white border-t">
         <button

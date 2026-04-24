@@ -29,7 +29,7 @@ export async function createService(tenantId: string, data: any) {
     });
 
     revalidatePath("/[tenantSlug]/admin/services", "page");
-    return { success: true, service };
+    return { success: true, service: JSON.parse(JSON.stringify(service)) };
   } catch (error) {
     console.error("Failed to create service:", error);
     return { success: false, error: "Lỗi hệ thống khi tạo dịch vụ" };
@@ -60,7 +60,7 @@ export async function updateService(id: string, data: any) {
     });
 
     revalidatePath("/[tenantSlug]/admin/services", "page");
-    return { success: true, service };
+    return { success: true, service: JSON.parse(JSON.stringify(service)) };
   } catch (error) {
     console.error("Failed to update service:", error);
     return { success: false, error: "Lỗi hệ thống khi cập nhật" };

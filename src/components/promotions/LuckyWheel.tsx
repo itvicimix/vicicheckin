@@ -7,12 +7,12 @@ interface LuckyWheelProps {
   onSpin: () => Promise<string | null>; // Returns the prize won
   onFinish: (prize: string) => void;
   color: string;
+  prizes: string[];
 }
 
-const PRIZES = ["2% Off", "5% Off", "10% Off", "Free Lipstick", "Free Makeup"];
-const SLICE_ANGLE = 360 / PRIZES.length;
-
-export function LuckyWheel({ onSpin, onFinish, color }: LuckyWheelProps) {
+export function LuckyWheel({ onSpin, onFinish, color, prizes }: LuckyWheelProps) {
+  const PRIZES = prizes.length > 0 ? prizes : ["2% Off", "5% Off", "10% Off", "Free Lipstick", "Free Makeup"];
+  const SLICE_ANGLE = 360 / PRIZES.length;
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [wonPrize, setWonPrize] = useState<string | null>(null);

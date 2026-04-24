@@ -16,15 +16,20 @@ model Tenant {
   name          String
   adminEmail    String
   adminPassword String
+  itPassword    String?
   themeColor    String   @default("#000000")
   logo          String?  @db.LongText
   location      String?
   phone         String?
   googleReviewUrl String?
+  socialLinks   String?  @db.LongText
   payments      String? // JSON string or comma-separated: ["creditCard", "paypal", "localPay"]
   paymentConfig String? // JSON string for API keys/settings
   slotInterval  Int      @default(30) // in minutes between time slots
   minLeadTime   Int      @default(60) // minimum minutes in advance to book
+  luckyWheelEnabled Boolean @default(false)
+  luckyWheelLastDisabled DateTime?
+  luckyWheelConfig String?  @db.LongText // JSON string for 5 prizes and percentages
   status        String   @default("Active")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -34,6 +39,7 @@ model Tenant {
   bookings        Booking[]
   customers       Customer[]
   promotionClaims PromotionClaim[]
+  coupons         Coupon[]
 }
 
 model Service {
@@ -73,6 +79,7 @@ model Booking {
   customerId    String?
   date          String // YYYY-MM-DD
   time          String // HH:MM
+  notes         String?  @db.Text
   status        String   @default("Pending") // Pending, Confirmed, Cancelled
   createdAt     DateTime @default(now())
 
@@ -101,8 +108,13 @@ model SystemSettings {
   twilioSid       String?
   twilioAuthToken String?
   twilioPhone     String?
+  pendingSmsTemplate  String? @db.Text
+  approvedSmsTemplate String? @db.Text
+  rejectedSmsTemplate String? @db.Text
   updatedAt       DateTime @updatedAt
 }
+
+
 
 model PromotionClaim {
   id          String   @id @default(uuid())
@@ -115,3 +127,21 @@ model PromotionClaim {
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   @@unique([tenantId, phone]) // Ensure one spin per phone number per salon
 }
+
+model Coupon {
+  id            String   @id @default(uuid())
+  tenantId      String
+  name          String
+  code          String
+  discountValue Float    // Percentage (e.g. 10 for 10%)
+  startDate     DateTime
+  endDate       DateTime
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, code])
+}
+

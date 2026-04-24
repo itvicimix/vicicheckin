@@ -64,3 +64,28 @@ export async function sendSMSPromotion(message: string, recipients: string[]) {
     };
   }
 }
+
+/**
+ * Gửi một tin nhắn SMS đơn lẻ.
+ */
+export async function sendSMS(to: string, message: string) {
+  try {
+    const settings = await getSystemSettings();
+    if (!settings || !settings.twilioSid || !settings.twilioAuthToken || !settings.twilioPhone) {
+      return { success: false, error: 'Twilio settings not configured' };
+    }
+
+    const client = twilio(settings.twilioSid, settings.twilioAuthToken);
+    const result = await client.messages.create({
+      body: message,
+      from: settings.twilioPhone,
+      to,
+    });
+
+    return { success: true, sid: result.sid };
+  } catch (error: any) {
+    console.error('Error sending single SMS:', error);
+    return { success: false, error: error.message };
+  }
+}
+
