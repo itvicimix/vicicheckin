@@ -30,6 +30,8 @@ model Tenant {
   luckyWheelEnabled Boolean @default(false)
   luckyWheelLastDisabled DateTime?
   luckyWheelConfig String?  @db.LongText // JSON string for 5 prizes and percentages
+  chatbotEnabled Boolean @default(false)
+  chatbotConfig  String?  @db.LongText // JSON: { type: 'whatsapp' | 'messenger' | 'script', value: '...' }
   status        String   @default("Active")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

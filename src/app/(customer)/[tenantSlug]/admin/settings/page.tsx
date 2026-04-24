@@ -1,8 +1,4 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import { Settings, Save, Clock, Calendar, MapPin, Phone, Palette, Loader2, CheckCircle, DollarSign, Share2 } from "lucide-react";
+import { Settings, Save, Clock, Calendar, MapPin, Phone, Palette, Loader2, CheckCircle, DollarSign, Share2, MessageSquare } from "lucide-react";
 import { getTenantBySlug, updateTenantSettings } from "@/actions/tenant";
 
 export default function SettingsPage() {
@@ -36,6 +32,12 @@ export default function SettingsPage() {
       tiktok: "",
       yelp: "",
       googleMaps: ""
+    },
+    chatbotEnabled: false,
+    chatbotConfig: {
+      type: "whatsapp", // whatsapp, messenger, script
+      value: "",
+      welcomeMessage: "Hi there! How can we help you today?"
     },
     adminEmail: "",
     adminPassword: "",
@@ -88,6 +90,12 @@ export default function SettingsPage() {
             yelp: "",
             googleMaps: ""
           },
+          chatbotEnabled: t.chatbotEnabled || false,
+          chatbotConfig: t.chatbotConfig ? JSON.parse(t.chatbotConfig) : {
+            type: "whatsapp",
+            value: "",
+            welcomeMessage: "Hi there! How can we help you today?"
+          },
           adminEmail: t.adminEmail || "",
           adminPassword: t.adminPassword || "",
           itPassword: t.itPassword || ""
@@ -133,6 +141,16 @@ export default function SettingsPage() {
     });
   };
 
+  const handleChatbotConfigChange = (field: string, value: any) => {
+    setFormData({
+      ...formData,
+      chatbotConfig: {
+        ...formData.chatbotConfig,
+        [field]: value
+      }
+    });
+  };
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -157,30 +175,37 @@ export default function SettingsPage() {
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 border-b border-gray-100 pb-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Salon Settings</h2>
-          <p className="text-gray-500 text-sm mt-1">Configure your business details, booking rules, and payment integrations.</p>
+          <p className="text-gray-500 text-sm mt-1">Configure your business details, booking rules, and chatbot.</p>
         </div>
         
-        <div className="flex bg-gray-100 p-1 rounded-xl">
+        <div className="flex bg-gray-100 p-1 rounded-xl overflow-x-auto no-scrollbar">
           <button 
             type="button"
             onClick={() => setActiveTab("general")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'general' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'general' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            General & Booking
+            General
           </button>
           <button 
             type="button"
             onClick={() => setActiveTab("payments")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'payments' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'payments' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
             Payments
           </button>
           <button 
             type="button"
             onClick={() => setActiveTab("social")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'social' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'social' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
             Social
+          </button>
+          <button 
+            type="button"
+            onClick={() => setActiveTab("chatbot")}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'chatbot' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Chatbot
           </button>
         </div>
       </div>
@@ -401,6 +426,78 @@ export default function SettingsPage() {
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                   <p className="text-xs text-gray-500 italic">
                     These links will be displayed as clickable icons on the booking confirmation page (Step 7) to encourage customers to follow you or leave reviews.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : activeTab === "chatbot" ? (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-gray-900 font-bold">
+                  <MessageSquare size={20} className="text-primary" />
+                  Chatbot Configuration
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-500">{formData.chatbotEnabled ? 'Enabled' : 'Disabled'}</span>
+                  <button 
+                    type="button"
+                    onClick={() => setFormData({...formData, chatbotEnabled: !formData.chatbotEnabled})}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.chatbotEnabled ? 'bg-primary' : 'bg-gray-200'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.chatbotEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Chatbot Type</label>
+                    <select 
+                      value={formData.chatbotConfig.type}
+                      onChange={(e) => handleChatbotConfigChange('type', e.target.value)}
+                      className="w-full p-2.5 rounded-xl border border-gray-200 focus:border-primary outline-none bg-white"
+                    >
+                      <option value="whatsapp">WhatsApp Direct</option>
+                      <option value="messenger">Facebook Messenger</option>
+                      <option value="script">Custom Script (Tawk.to, etc.)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      {formData.chatbotConfig.type === 'whatsapp' ? 'WhatsApp Phone Number' : 
+                       formData.chatbotConfig.type === 'messenger' ? 'Facebook Page ID/Username' : 
+                       'Script URL / Snippet'}
+                    </label>
+                    <input 
+                      type="text" 
+                      value={formData.chatbotConfig.value}
+                      onChange={(e) => handleChatbotConfigChange('value', e.target.value)}
+                      placeholder={formData.chatbotConfig.type === 'whatsapp' ? '+1234567890' : 'YourPageName'}
+                      className="w-full p-2.5 rounded-xl border border-gray-200 focus:border-primary outline-none text-sm" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Welcome Message</label>
+                  <textarea 
+                    value={formData.chatbotConfig.welcomeMessage}
+                    onChange={(e) => handleChatbotConfigChange('welcomeMessage', e.target.value)}
+                    rows={2}
+                    className="w-full p-2.5 rounded-xl border border-gray-200 focus:border-primary outline-none text-sm" 
+                  />
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <p className="text-xs text-gray-500 italic">
+                    {formData.chatbotConfig.type === 'whatsapp' ? 
+                      "Customers will be redirected to WhatsApp to chat with you." : 
+                      formData.chatbotConfig.type === 'messenger' ? 
+                      "Customers will open a Facebook Messenger chat with your page." : 
+                      "Paste your third-party chatbot script URL here."
+                    }
                   </p>
                 </div>
               </div>

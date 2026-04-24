@@ -6,6 +6,7 @@ import { getTenantBySlug } from "@/actions/tenant";
 import { checkEligibility, claimPromotion } from "@/actions/promotion";
 import { LuckyWheel } from "@/components/promotions/LuckyWheel";
 import { Loader2, Phone, ArrowRight, AlertCircle, Gift } from "lucide-react";
+import { ChatbotWidget } from "@/components/common/ChatbotWidget";
 
 export default function PromotionsPage() {
   const params = useParams();
@@ -179,6 +180,8 @@ export default function PromotionsPage() {
           </div>
         )}
       </div>
+
+      <ChatbotWidget tenant={tenant} />
     </main>
   );
 }

@@ -1,6 +1,7 @@
 import { BookingWizard } from "@/components/booking/BookingWizard";
 import { notFound } from "next/navigation";
 import { getTenantBySlug } from "@/actions/tenant";
+import { ChatbotWidget } from "@/components/common/ChatbotWidget";
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -47,6 +48,8 @@ export default async function TenantBookingPage({ params }: PageProps) {
           <BookingWizard tenant={tenant} />
         </div>
       </div>
+      
+      <ChatbotWidget tenant={tenant} />
     </main>
   );
 }

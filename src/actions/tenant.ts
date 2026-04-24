@@ -95,6 +95,8 @@ export async function updateTenantSettings(tenantId: string, data: any) {
         googleReviewUrl: data.googleReviewUrl !== undefined ? data.googleReviewUrl : undefined,
         socialLinks: data.socialLinks !== undefined ? (data.socialLinks ? JSON.stringify(data.socialLinks) : null) : undefined,
         paymentConfig: data.paymentConfig !== undefined ? (data.paymentConfig ? JSON.stringify(data.paymentConfig) : null) : undefined,
+        chatbotEnabled: data.chatbotEnabled !== undefined ? data.chatbotEnabled : undefined,
+        chatbotConfig: data.chatbotConfig !== undefined ? (data.chatbotConfig ? JSON.stringify(data.chatbotConfig) : null) : undefined,
       },
     });
 
