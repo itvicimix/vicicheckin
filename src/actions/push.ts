@@ -5,12 +5,12 @@ import webpush from "web-push";
 
 // Configure web-push
 // We add hardcoded fallbacks here so it works immediately on Hostinger without needing to configure .env
-const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "BNMpEyosk2BeP2VZ4CvmwgU-uEaJP3UUawBhoGdoJav996XH7MWBRqt8-eUB0kP-3REeS75Nm-ra04zsESuaOQ4";
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "gZ9_hK5gNjUa2XIIu51r8YeCpU_Y1cPV008ctEHoDNU";
+const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "BA512PEgF58U0KFjO-I3U_QzUMuSdlr8jQ-yjmwRajadVdefEvx_AkQ75fF30py4g6ILwKfospZ6CR1etUN6vxI";
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "Yr7XoQcBuqw3b-mq6seAb0l4ssBjnLW4CB1D3cbw0o8";
 
 if (vapidPublicKey && vapidPrivateKey) {
   webpush.setVapidDetails(
-    "mailto:admin@vicimis.com",
+    "mailto:admin@vicicheckin.com",
     vapidPublicKey,
     vapidPrivateKey
   );
