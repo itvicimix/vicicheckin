@@ -2,7 +2,7 @@
   "name": "Salon Admin",
   "short_name": "Salon Admin",
   "description": "Multi-tenant Salon Management System",
-  "start_url": "/vici-checkin/admin",
+  "start_url": "/vici-checkin/login",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
