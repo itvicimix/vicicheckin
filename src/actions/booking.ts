@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { sendSMS } from "./sms";
 import { getTenantById } from "./tenant";
 import { getSystemSettings } from "./settings";
+import { createNotification } from "./notification";
 
 function replaceSmsVariables(template: string, data: any) {
   return template
@@ -150,6 +151,18 @@ export async function createBooking({
       }
     } catch (smsError) {
       console.error("Failed to send pending SMS:", smsError);
+    }
+
+    // 7. Create Notification for Admin
+    try {
+      await createNotification(
+        tenantId,
+        "appointment",
+        "New Appointment",
+        `${customerName} just booked ${service.name} on ${date} at ${time}.`
+      );
+    } catch (notifError) {
+      console.error("Failed to create notification:", notifError);
     }
 
     // Revalidate paths so they show up immediately

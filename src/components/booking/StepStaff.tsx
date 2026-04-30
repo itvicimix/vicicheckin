@@ -1,22 +1,48 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Staff, useBookingStore } from "@/store/useBookingStore";
-import { User, Check } from "lucide-react";
+import { User, Check, Loader2 } from "lucide-react";
+import { getStaff } from "@/actions/staff";
 
-const mockStaff: Staff[] = [
-  { id: "any", name: "Any Available" },
-  { id: "staff1", name: "Sarah" },
-  { id: "staff2", name: "Jessica" },
-  { id: "staff3", name: "Michael" },
-];
-
-export function StepStaff() {
+export function StepStaff({ tenant }: { tenant: any }) {
   const { selectedStaff, setStaff, nextStep } = useBookingStore();
+  const [staffList, setStaffList] = useState<Staff[]>([{ id: "any", name: "Any Available" }]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const data = await getStaff(tenant.id);
+        const formattedStaff: Staff[] = data.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          timeOffDates: s.timeOffDates ? JSON.parse(s.timeOffDates) : []
+        }));
+        setStaffList([{ id: "any", name: "Any Available" }, ...formattedStaff]);
+      } catch (error) {
+        console.error("Failed to load staff", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (tenant?.id) {
+      fetchStaff();
+    }
+  }, [tenant?.id]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto space-y-3 pb-24">
-        {mockStaff.map((staff) => {
+        {staffList.map((staff) => {
           const isSelected = selectedStaff?.id === staff.id || (staff.id === "any" && selectedStaff === null);
           return (
             <div

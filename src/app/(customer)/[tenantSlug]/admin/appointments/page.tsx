@@ -14,6 +14,23 @@ export default function AppointmentsPage() {
   const [tenant, setTenant] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const filteredBookings = bookings.filter(b => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return b.customerName?.toLowerCase().includes(q) ||
+           b.customerPhone?.includes(q) ||
+           b.service?.name?.toLowerCase().includes(q) ||
+           b.staff?.name?.toLowerCase().includes(q) ||
+           b.id.toLowerCase().includes(q);
+  });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -83,6 +100,9 @@ export default function AppointmentsPage() {
     );
   }
 
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
+  const paginatedBookings = filteredBookings.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-8rem)]">
       
@@ -97,6 +117,8 @@ export default function AppointmentsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input 
             type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search appointments..." 
             className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
           />
@@ -116,14 +138,14 @@ export default function AppointmentsPage() {
             </tr>
           </thead>
           <tbody className="text-sm">
-            {bookings.length === 0 ? (
+            {filteredBookings.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                   No appointments found.
                 </td>
               </tr>
             ) : (
-              bookings.map((b) => (
+              paginatedBookings.map((b) => (
                 <tr key={b.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -176,12 +198,12 @@ export default function AppointmentsPage() {
 
       {/* Mobile Card Content */}
       <div className="flex-1 overflow-auto md:hidden p-4 space-y-4 bg-gray-50/50">
-        {bookings.length === 0 ? (
+        {filteredBookings.length === 0 ? (
           <div className="py-12 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-200">
             No appointments found.
           </div>
         ) : (
-          bookings.map((b) => (
+          paginatedBookings.map((b) => (
             <div key={b.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-3">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
@@ -232,6 +254,34 @@ export default function AppointmentsPage() {
           ))
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-gray-100 bg-white mt-auto shrink-0 z-10 gap-3">
+          <span className="text-sm text-gray-500">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredBookings.length)} of {filteredBookings.length} entries
+          </span>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              Previous
+            </button>
+            <div className="px-4 py-2 text-sm font-bold text-gray-700 bg-gray-50 rounded-lg border border-gray-100">
+              Page {currentPage} of {totalPages}
+            </div>
+            <button 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

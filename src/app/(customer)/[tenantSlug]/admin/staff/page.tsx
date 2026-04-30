@@ -25,6 +25,15 @@ export default function StaffPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredStaff = staffList.filter(s => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return s.name.toLowerCase().includes(q) ||
+           (s.role && s.role.toLowerCase().includes(q)) ||
+           (s.phone && s.phone.includes(q));
+  });
 
   // Edit Modal State
   const [editingStaff, setEditingStaff] = useState<any>(null);
@@ -196,6 +205,8 @@ export default function StaffPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search staff..." 
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
             />
@@ -286,14 +297,14 @@ export default function StaffPage() {
 
       {/* Grid Content */}
       <div className="flex-1 overflow-auto p-6 bg-gray-50/50">
-        {staffList.length === 0 ? (
+        {filteredStaff.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 bg-white rounded-2xl border border-dashed border-gray-200">
             <User className="w-12 h-12 text-gray-300 mb-4" />
-            <p className="text-gray-500">No staff members found. Add your first team member above.</p>
+            <p className="text-gray-500">No staff members found.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {staffList.map((staff) => (
+            {filteredStaff.map((staff) => (
               <div key={staff.id} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow group relative">
                 
                 {/* Action Menu */}

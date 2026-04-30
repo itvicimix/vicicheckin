@@ -17,9 +17,9 @@ export function BookingWizard({ tenant }: { tenant: any }) {
   const renderStep = () => {
     switch (step) {
       case 1:
-        return <StepService key="step1" />;
+        return <StepService key="step1" tenant={tenant} />;
       case 2:
-        return <StepStaff key="step2" />;
+        return <StepStaff key="step2" tenant={tenant} />;
       case 3:
         return <StepDateTime key="step3" tenant={tenant} />;
       case 4:
@@ -31,7 +31,7 @@ export function BookingWizard({ tenant }: { tenant: any }) {
       case 7:
         return <StepConfirm key="step7" tenant={tenant} />;
       default:
-        return <StepService key="step1" />;
+        return <StepService key="step1" tenant={tenant} />;
     }
   };
 

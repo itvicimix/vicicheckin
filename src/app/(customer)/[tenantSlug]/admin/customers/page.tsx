@@ -13,6 +13,9 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [filteredCustomers, setFilteredCustomers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
   const [tenant, setTenant] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -58,6 +61,7 @@ export default function CustomersPage() {
   }, [tenantSlug]);
 
   useEffect(() => {
+    setCurrentPage(1); // Reset page on search
     if (!searchQuery) {
       setFilteredCustomers(customers);
     } else {
@@ -256,6 +260,9 @@ export default function CustomersPage() {
     );
   }
 
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const paginatedCustomers = filteredCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-8rem)] relative">
       
@@ -413,7 +420,7 @@ export default function CustomersPage() {
                 </td>
               </tr>
             ) : (
-              filteredCustomers.map((c) => (
+              paginatedCustomers.map((c) => (
                 <tr key={c.id} className={`border-b border-gray-50 hover:bg-gray-50/50 transition-colors group ${selectedIds.includes(c.id) ? 'bg-primary/5' : ''}`}>
                   <td className="px-6 py-4">
                     <input 
@@ -440,10 +447,10 @@ export default function CustomersPage() {
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className={`inline-flex w-fit items-center px-2 py-0.5 rounded text-xs font-medium ${
-                        c.tier === "Diamond" ? "bg-purple-100 text-purple-800" :
-                        c.tier === "Gold" ? "bg-yellow-100 text-yellow-800" :
-                        c.tier === "Silver" ? "bg-gray-200 text-gray-800" :
-                        c.tier === "Bronze" ? "bg-orange-100 text-orange-800" :
+                        c.tier === "Diamond" || c.tier === "Kim cương" ? "bg-purple-100 text-purple-800" :
+                        c.tier === "Gold" || c.tier === "Vàng" ? "bg-yellow-100 text-yellow-800" :
+                        c.tier === "Silver" || c.tier === "Bạc" ? "bg-slate-200 text-slate-700" :
+                        c.tier === "Bronze" || c.tier === "Đồng" ? "bg-amber-100 text-amber-800" :
                         "bg-gray-100 text-gray-600"
                       }`}>
                         {c.tier}
@@ -498,7 +505,7 @@ export default function CustomersPage() {
             No customers found.
           </div>
         ) : (
-          filteredCustomers.map((c) => (
+          paginatedCustomers.map((c) => (
             <div key={c.id} className={`bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-3 ${selectedIds.includes(c.id) ? 'ring-2 ring-primary' : ''}`}>
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3" onClick={() => toggleSelect(c.id)}>
@@ -515,10 +522,11 @@ export default function CustomersPage() {
                 </div>
                 <div className="flex flex-col items-end gap-1">
                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                    c.tier === "Diamond" ? "bg-purple-100 text-purple-800" :
-                    c.tier === "Gold" ? "bg-yellow-100 text-yellow-800" :
-                    c.tier === "Silver" ? "bg-gray-200 text-gray-800" :
-                    "bg-orange-100 text-orange-800"
+                    c.tier === "Diamond" || c.tier === "Kim cương" ? "bg-purple-100 text-purple-800" :
+                    c.tier === "Gold" || c.tier === "Vàng" ? "bg-yellow-100 text-yellow-800" :
+                    c.tier === "Silver" || c.tier === "Bạc" ? "bg-slate-200 text-slate-700" :
+                    c.tier === "Bronze" || c.tier === "Đồng" ? "bg-amber-100 text-amber-800" :
+                    "bg-gray-100 text-gray-600"
                   }`}>
                     {c.tier}
                   </span>
@@ -547,6 +555,34 @@ export default function CustomersPage() {
           ))
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-gray-100 bg-white mt-auto shrink-0 z-10 gap-3">
+          <span className="text-sm text-gray-500">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredCustomers.length)} of {filteredCustomers.length} entries
+          </span>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              Previous
+            </button>
+            <div className="px-4 py-2 text-sm font-bold text-gray-700 bg-gray-50 rounded-lg border border-gray-100">
+              Page {currentPage} of {totalPages}
+            </div>
+            <button 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -18,6 +18,20 @@ export default function ServicesPage() {
   const [categories, setCategories] = useState(["Nails", "Spa", "Hair"]);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const filteredServices = services.filter(s => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return s.name.toLowerCase().includes(q) ||
+           (s.category && s.category.toLowerCase().includes(q));
+  });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
   
   // Delete Modal State
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -188,6 +202,9 @@ export default function ServicesPage() {
     );
   }
 
+  const totalPages = Math.ceil(filteredServices.length / itemsPerPage);
+  const paginatedServices = filteredServices.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-8rem)] relative">
       
@@ -203,6 +220,8 @@ export default function ServicesPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search services..." 
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
             />
@@ -324,14 +343,14 @@ export default function ServicesPage() {
             </tr>
           </thead>
           <tbody className="text-sm">
-            {services.length === 0 ? (
+            {filteredServices.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                   No services found. Add your first service above.
                 </td>
               </tr>
             ) : (
-              services.map((service) => (
+              paginatedServices.map((service) => (
                 <tr key={service.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
                   <td className="px-6 py-4 font-medium text-gray-900">{service.name}</td>
                   <td className="px-6 py-4">
@@ -366,12 +385,12 @@ export default function ServicesPage() {
 
       {/* Mobile Card Content */}
       <div className="flex-1 overflow-auto md:hidden p-4 space-y-4 bg-gray-50/50">
-        {services.length === 0 ? (
+        {filteredServices.length === 0 ? (
           <div className="py-12 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-200">
             No services found. Add your first service above.
           </div>
         ) : (
-          services.map((service) => (
+          paginatedServices.map((service) => (
             <div key={service.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-3">
               <div className="flex justify-between items-start">
                 <div>
@@ -404,6 +423,34 @@ export default function ServicesPage() {
           ))
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-gray-100 bg-white mt-auto shrink-0 z-10 gap-3">
+          <span className="text-sm text-gray-500">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredServices.length)} of {filteredServices.length} entries
+          </span>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              Previous
+            </button>
+            <div className="px-4 py-2 text-sm font-bold text-gray-700 bg-gray-50 rounded-lg border border-gray-100">
+              Page {currentPage} of {totalPages}
+            </div>
+            <button 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Custom Delete Confirmation Modal */}
       {deleteModalOpen && (

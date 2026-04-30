@@ -7,7 +7,7 @@ import {
   LayoutDashboard, 
   CalendarDays, 
   Users, 
-  Scissors, 
+  Sparkles, 
   Settings, 
   LogOut,
   Bell,
@@ -18,10 +18,23 @@ import {
   X,
   Tag,
   Sun,
-  Moon
+  Moon,
+  Clock
 } from "lucide-react";
 import { logoutAdmin } from "@/actions/auth";
 import { getTenantBySlug } from "@/actions/tenant";
+import { getNotifications, markAsRead, markAllAsRead } from "@/actions/notification";
+
+function formatTimeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return "Just now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} mins ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  return `${Math.floor(diffInSeconds / 86400)} days ago`;
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -47,26 +60,62 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     localStorage.setItem("adminTheme", newTheme ? "dark" : "light");
   };
 
-  const notifications = [
-    { id: 1, type: "appointment", title: "New Appointment", message: "A new customer just booked an appointment.", time: "Few minutes ago", read: false },
-    { id: 2, type: "update", title: "App Update", message: "SMS Marketing feature is now available.", time: "2 hours ago", read: true },
-    { id: 3, type: "maintenance", title: "System Maintenance", message: "System will undergo scheduled maintenance from 2 AM to 4 AM tomorrow.", time: "1 day ago", read: true },
-  ];
+  const [notifications, setNotifications] = useState<any[]>([]);
   const unreadCount = notifications.filter(n => !n.read).length;
 
   useEffect(() => {
-    const fetchTenant = async () => {
+    let intervalId: NodeJS.Timeout;
+
+    const fetchTenantData = async () => {
       try {
         const t = await getTenantBySlug(tenantSlug);
         setTenant(t);
+        if (t) {
+          const notifs = await getNotifications(t.id);
+          setNotifications(notifs);
+        }
       } catch (error) {
         console.error("Error fetching tenant info:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchTenant();
-  }, [tenantSlug]);
+    
+    // Initial fetch
+    fetchTenantData();
+
+    // Poll every 15 seconds
+    intervalId = setInterval(async () => {
+      if (tenant?.id) {
+        const notifs = await getNotifications(tenant.id);
+        setNotifications(notifs);
+      } else {
+        fetchTenantData();
+      }
+    }, 15000);
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [tenantSlug, tenant?.id]);
+
+  const handleNotificationClick = async (notif: any) => {
+    if (!notif.read) {
+      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+      await markAsRead(notif.id);
+    }
+    
+    if (notif.type === "appointment") {
+      setShowNotifications(false);
+      router.push(`/${tenantSlug}/admin/appointments`);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    if (!tenant || unreadCount === 0) return;
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    await markAllAsRead(tenant.id);
+  };
 
   const handleLogout = async () => {
     await logoutAdmin(tenantSlug);
@@ -78,9 +127,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: "Calendar", href: `/${tenantSlug}/admin/calendar`, icon: CalendarDays },
     { name: "Appointments", href: `/${tenantSlug}/admin/appointments`, icon: ListTodo },
     { name: "Customers", href: `/${tenantSlug}/admin/customers`, icon: User },
-    { name: "Services", href: `/${tenantSlug}/admin/services`, icon: Scissors },
+    { name: "Services", href: `/${tenantSlug}/admin/services`, icon: Sparkles },
      { name: "Staff", href: `/${tenantSlug}/admin/staff`, icon: Users },
      { name: "Promotions", href: `/${tenantSlug}/admin/promotions`, icon: Tag },
+     { name: "Working Hours", href: `/${tenantSlug}/admin/working-hours`, icon: Clock },
      { name: "Settings", href: `/${tenantSlug}/admin/settings`, icon: Settings },
   ];
 
@@ -217,25 +267,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   }`}>
                     <div className={`p-4 border-b flex justify-between items-center ${isDarkMode ? "bg-zinc-900/50 border-zinc-800" : "bg-gray-50/50 border-gray-50"}`}>
                       <h3 className={`font-bold ${isDarkMode ? "text-white" : "text-gray-800"}`}>Notifications</h3>
-                      <button className="text-xs text-primary hover:underline font-medium">Mark all as read</button>
+                      {unreadCount > 0 && (
+                        <button onClick={handleMarkAllAsRead} className="text-xs text-primary hover:underline font-medium">Mark all as read</button>
+                      )}
                     </div>
                     <div className="max-h-[320px] overflow-y-auto">
-                      {notifications.map((notif) => (
-                        <div key={notif.id} className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.read ? 'bg-blue-50/30' : ''}`}>
-                          <div className="flex justify-between items-start mb-1">
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                              notif.type === 'appointment' ? 'bg-green-100 text-green-700' :
-                              notif.type === 'update' ? 'bg-blue-100 text-blue-700' :
-                              'bg-orange-100 text-orange-700'
-                            }`}>
-                              {notif.type === 'appointment' ? 'Appointment' : notif.type === 'update' ? 'Update' : 'Maintenance'}
-                            </span>
-                            <span className="text-xs text-gray-400 font-medium">{notif.time}</span>
+                      {notifications.length === 0 ? (
+                        <div className="p-6 text-center text-gray-500 text-sm">No notifications</div>
+                      ) : (
+                        notifications.map((notif) => (
+                          <div 
+                            key={notif.id} 
+                            onClick={() => handleNotificationClick(notif)}
+                            className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.read ? (isDarkMode ? 'bg-primary/10' : 'bg-blue-50/30') : ''} ${isDarkMode ? 'border-zinc-800 hover:bg-zinc-800' : ''}`}
+                          >
+                            <div className="flex justify-between items-start mb-1">
+                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                notif.type === 'appointment' ? 'bg-green-100 text-green-700' :
+                                notif.type === 'update' ? 'bg-blue-100 text-blue-700' :
+                                'bg-orange-100 text-orange-700'
+                              }`}>
+                                {notif.type === 'appointment' ? 'Appointment' : notif.type === 'update' ? 'Update' : 'Maintenance'}
+                              </span>
+                              <span className="text-xs text-gray-400 font-medium">{formatTimeAgo(notif.createdAt)}</span>
+                            </div>
+                            <h4 className={`text-sm font-semibold mt-2 ${isDarkMode ? "text-white" : "text-gray-800"}`}>{notif.title}</h4>
+                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">{notif.message}</p>
                           </div>
-                          <h4 className="text-sm font-semibold text-gray-800 mt-2">{notif.title}</h4>
-                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{notif.message}</p>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                     <div className="p-3 text-center border-t border-gray-50 bg-gray-50/50">
                       <button className="text-sm text-primary hover:underline font-medium">View all notifications</button>

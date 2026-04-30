@@ -15,12 +15,17 @@ const generateDays = () => {
 };
 
 export function StepDateTime({ tenant }: { tenant: any }) {
-  const { selectedDate, selectedTime, setDateTime, nextStep } = useBookingStore();
+  const { selectedDate, selectedTime, setDateTime, nextStep, selectedStaff } = useBookingStore();
   
   const [localDate, setLocalDate] = useState<Date | null>(selectedDate || new Date());
   const [localTime, setLocalTime] = useState<string | null>(selectedTime);
 
   const days = generateDays();
+
+  // Parse configurations
+  const workingHours = typeof tenant?.workingHours === 'string' ? JSON.parse(tenant.workingHours) : tenant?.workingHours || {};
+  const holidays = typeof tenant?.holidays === 'string' ? JSON.parse(tenant.holidays) : tenant?.holidays || [];
+  const staffTimeOff = selectedStaff?.timeOffDates || [];
 
   // Dynamic time slot generation
   const slotInterval = tenant?.slotInterval || 30;
@@ -29,26 +34,58 @@ export function StepDateTime({ tenant }: { tenant: any }) {
   const timeSlots = (() => {
     if (!localDate) return [];
     const slots = [];
-    const startHour = 8; // 8 AM
-    const endHour = 20;  // 8 PM
-    const now = new Date();
     
-    // Threshold for minimum lead time
+    // Get day name (Monday, Tuesday, etc.)
+    const dayName = localDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const dayConfig = workingHours[dayName];
+    
+    // Check if salon is closed or it's a holiday
+    const dateStr = localDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD (approximate)
+    // A better way to get local YYYY-MM-DD
+    const offsetDate = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
+    const localDateStr = offsetDate.toISOString().split('T')[0];
+
+    if (holidays.includes(localDateStr)) return [];
+    if (staffTimeOff.includes(localDateStr)) return [];
+    if (dayConfig && dayConfig.isOpen === false) return [];
+
+    let startHour = 8;
+    let endHour = 20;
+    let startMin = 0;
+    let endMin = 0;
+
+    if (dayConfig && dayConfig.openTime) {
+      const [h, m] = dayConfig.openTime.split(':');
+      startHour = parseInt(h);
+      startMin = parseInt(m);
+    }
+    if (dayConfig && dayConfig.closeTime) {
+      const [h, m] = dayConfig.closeTime.split(':');
+      endHour = parseInt(h);
+      endMin = parseInt(m);
+    }
+
+    const now = new Date();
     const threshold = new Date(now.getTime() + minLeadTime * 60000);
 
-    for (let h = startHour; h < endHour; h++) {
-      for (let m = 0; m < 60; m += slotInterval) {
-        const slotDate = new Date(localDate);
-        slotDate.setHours(h, m, 0, 0);
+    // Generate slots
+    const startMins = startHour * 60 + startMin;
+    const endMins = endHour * 60 + endMin;
 
-        if (slotDate > threshold) {
-          const timeStr = slotDate.toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            hour12: true 
-          });
-          slots.push(timeStr);
-        }
+    for (let m = startMins; m < endMins; m += slotInterval) {
+      const h = Math.floor(m / 60);
+      const min = m % 60;
+      
+      const slotDate = new Date(localDate);
+      slotDate.setHours(h, min, 0, 0);
+
+      if (slotDate > threshold) {
+        const timeStr = slotDate.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: true 
+        });
+        slots.push(timeStr);
       }
     }
     return slots;
@@ -71,25 +108,41 @@ export function StepDateTime({ tenant }: { tenant: any }) {
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {days.map((date, i) => {
               const isSelected = localDate?.toDateString() === date.toDateString();
-              const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+              const dayNameShort = date.toLocaleDateString('en-US', { weekday: 'short' });
+              const dayNameLong = date.toLocaleDateString('en-US', { weekday: 'long' });
               const dayNum = date.getDate();
               const month = date.toLocaleDateString('en-US', { month: 'short' });
               
+              // Check if disabled
+              const offsetDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+              const dateStr = offsetDate.toISOString().split('T')[0];
+              const isHoliday = holidays.includes(dateStr);
+              const isStaffOff = staffTimeOff.includes(dateStr);
+              const dayConfig = workingHours[dayNameLong];
+              const isClosed = dayConfig && dayConfig.isOpen === false;
+              
+              const isDisabled = isHoliday || isStaffOff || isClosed;
+              
               return (
-                <div
+                <button
                   key={i}
                   onClick={() => {
-                    setLocalDate(date);
-                    setLocalTime(null);
+                    if (!isDisabled) {
+                      setLocalDate(date);
+                      setLocalTime(null);
+                    }
                   }}
-                  className={`min-w-[80px] cursor-pointer rounded-2xl p-3 flex flex-col items-center justify-center border-2 transition-colors ${
-                    isSelected ? "border-primary bg-primary text-white" : "border-gray-100 hover:border-gray-300 bg-white"
+                  disabled={isDisabled}
+                  className={`min-w-[80px] rounded-2xl p-3 flex flex-col items-center justify-center border-2 transition-colors ${
+                    isDisabled ? "opacity-50 bg-gray-50 border-gray-100 cursor-not-allowed" :
+                    isSelected ? "border-primary bg-primary text-white cursor-pointer" : "border-gray-100 hover:border-gray-300 bg-white cursor-pointer"
                   }`}
                 >
                   <span className={`text-xs ${isSelected ? "text-white/80" : "text-gray-500"}`}>{month}</span>
-                  <span className="text-xl font-bold my-1">{dayNum}</span>
-                  <span className={`text-xs uppercase font-medium ${isSelected ? "text-white" : "text-gray-700"}`}>{dayName}</span>
-                </div>
+                  <span className={`text-xl font-bold my-1 ${isDisabled ? "text-gray-400" : ""}`}>{dayNum}</span>
+                  <span className={`text-xs uppercase font-medium ${isSelected ? "text-white" : "text-gray-700"}`}>{dayNameShort}</span>
+                  {isDisabled && <span className="text-[10px] text-red-500 mt-1 font-bold">{isClosed ? "Closed" : "Off"}</span>}
+                </button>
               );
             })}
           </div>

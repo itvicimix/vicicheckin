@@ -41,7 +41,14 @@ export default function SettingsPage() {
     chatbotConfig: {
       type: "whatsapp", // whatsapp, messenger, script
       value: "",
-      welcomeMessage: "Hi there! How can we help you today?"
+      welcomeMessage: "Hi there! How can we help you today?",
+      faq: [
+        { q: "Tôi muốn đặt lịch hẹn", a: "Dạ vâng, bạn có thể ấn nút 'Start Chat' ở dưới để gặp nhân viên hỗ trợ, hoặc đặt trực tiếp qua giao diện web nhé!" },
+        { q: "Xin báo giá dịch vụ", a: "Bảng giá dịch vụ tùy thuộc vào yêu cầu cụ thể. Bạn vui lòng chat trực tiếp để được tư vấn chi tiết hơn." },
+        { q: "Giờ mở cửa của tiệm", a: "Chúng tôi mở cửa từ 9:00 Sáng đến 8:00 Tối mỗi ngày." },
+        { q: "Vị trí tiệm ở đâu?", a: "Vui lòng kéo xuống cuối trang web hoặc click vào nút Chat để nhận vị trí chính xác." },
+        { q: "Tôi cần tư vấn thêm", a: "Dạ vâng, bạn vui lòng ấn nút 'Start Chat' bên dưới để nhân viên của chúng tôi hỗ trợ bạn ngay lập tức!" }
+      ]
     },
     adminEmail: "",
     adminPassword: "",
@@ -77,33 +84,41 @@ export default function SettingsPage() {
           } catch (e) {}
         }
 
-        setFormData({
-          name: t.name || "",
-          location: t.location || "",
-          phone: t.phone || "",
-          slotInterval: t.slotInterval?.toString() || "30",
-          minLeadTime: t.minLeadTime?.toString() || "60",
-          themeColor: t.themeColor || "#000000",
-          logo: t.logo || "",
-          googleReviewUrl: t.googleReviewUrl || "",
-          paymentConfig: config,
-          socialLinks: t.socialLinks ? JSON.parse(t.socialLinks) : {
-            facebook: "",
-            instagram: "",
-            tiktok: "",
-            yelp: "",
-            googleMaps: ""
-          },
-          chatbotEnabled: t.chatbotEnabled || false,
-          chatbotConfig: t.chatbotConfig ? JSON.parse(t.chatbotConfig) : {
-            type: "whatsapp",
-            value: "",
-            welcomeMessage: "Hi there! How can we help you today?"
-          },
-          adminEmail: t.adminEmail || "",
-          adminPassword: t.adminPassword || "",
-          itPassword: t.itPassword || ""
-        });
+          const parsedConfig = t.chatbotConfig ? JSON.parse(t.chatbotConfig) : {};
+          setFormData({
+            name: t.name || "",
+            location: t.location || "",
+            phone: t.phone || "",
+            slotInterval: t.slotInterval?.toString() || "30",
+            minLeadTime: t.minLeadTime?.toString() || "60",
+            themeColor: t.themeColor || "#000000",
+            logo: t.logo || "",
+            googleReviewUrl: t.googleReviewUrl || "",
+            paymentConfig: config,
+            socialLinks: t.socialLinks ? JSON.parse(t.socialLinks) : {
+              facebook: "",
+              instagram: "",
+              tiktok: "",
+              yelp: "",
+              googleMaps: ""
+            },
+            chatbotEnabled: t.chatbotEnabled || false,
+            chatbotConfig: {
+              type: parsedConfig.type || "whatsapp",
+              value: parsedConfig.value || "",
+              welcomeMessage: parsedConfig.welcomeMessage || "Hi there! How can we help you today?",
+              faq: parsedConfig.faq || [
+                { q: "Tôi muốn đặt lịch hẹn", a: "Dạ vâng, bạn có thể ấn nút 'Start Chat' ở dưới để gặp nhân viên hỗ trợ, hoặc đặt trực tiếp qua giao diện web nhé!" },
+                { q: "Xin báo giá dịch vụ", a: "Bảng giá dịch vụ tùy thuộc vào yêu cầu cụ thể. Bạn vui lòng chat trực tiếp để được tư vấn chi tiết hơn." },
+                { q: "Giờ mở cửa của tiệm", a: "Chúng tôi mở cửa từ 9:00 Sáng đến 8:00 Tối mỗi ngày." },
+                { q: "Vị trí tiệm ở đâu?", a: "Vui lòng kéo xuống cuối trang web hoặc click vào nút Chat để nhận vị trí chính xác." },
+                { q: "Tôi cần tư vấn thêm", a: "Dạ vâng, bạn vui lòng ấn nút 'Start Chat' bên dưới để nhân viên của chúng tôi hỗ trợ bạn ngay lập tức!" }
+              ]
+            },
+            adminEmail: t.adminEmail || "",
+            adminPassword: t.adminPassword || "",
+            itPassword: t.itPassword || ""
+          });
       }
       setIsLoading(false);
     };
@@ -492,6 +507,48 @@ export default function SettingsPage() {
                     rows={2}
                     className="w-full p-2.5 rounded-xl border border-gray-200 focus:border-primary outline-none text-sm" 
                   />
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-gray-100">
+                  <div className="space-y-1">
+                    <label className="text-sm font-bold text-gray-700">Preset Q&A Responses</label>
+                    <p className="text-xs text-gray-500">Configure 5 common questions and their automated answers to show in the chatbot.</p>
+                  </div>
+                  {formData.chatbotConfig.faq?.map((item: any, idx: number) => (
+                    <div key={idx} className="flex gap-3 items-start bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                      <span className="text-primary font-bold w-4 text-sm mt-2">{idx + 1}.</span>
+                      <div className="flex-1 space-y-3">
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Question</label>
+                          <input 
+                            type="text" 
+                            value={item.q}
+                            onChange={(e) => {
+                              const newFaq = [...formData.chatbotConfig.faq];
+                              newFaq[idx].q = e.target.value;
+                              handleChatbotConfigChange('faq', newFaq);
+                            }}
+                            placeholder="Customer asks..."
+                            className="w-full p-2.5 rounded-lg border border-gray-200 focus:border-primary outline-none text-sm bg-white" 
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Auto Answer</label>
+                          <textarea 
+                            value={item.a}
+                            onChange={(e) => {
+                              const newFaq = [...formData.chatbotConfig.faq];
+                              newFaq[idx].a = e.target.value;
+                              handleChatbotConfigChange('faq', newFaq);
+                            }}
+                            placeholder="Bot replies with..."
+                            rows={2}
+                            className="w-full p-2.5 rounded-lg border border-gray-200 focus:border-primary outline-none text-sm bg-white" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">

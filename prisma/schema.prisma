@@ -32,6 +32,8 @@ model Tenant {
   luckyWheelConfig String?  @db.LongText // JSON string for 5 prizes and percentages
   chatbotEnabled Boolean @default(false)
   chatbotConfig  String?  @db.LongText // JSON: { type: 'whatsapp' | 'messenger' | 'script', value: '...' }
+  workingHours  String?  @db.LongText
+  holidays      String?  @db.LongText
   status        String   @default("Active")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -42,6 +44,7 @@ model Tenant {
   customers       Customer[]
   promotionClaims PromotionClaim[]
   coupons         Coupon[]
+  notifications   Notification[]
 }
 
 model Service {
@@ -65,6 +68,7 @@ model Staff {
   phone     String?
   workHours String?  @db.Text
   dayOff    String?  @default("None")
+  timeOffDates String? @db.Text // JSON string of specific off dates: ["2026-12-24", "2026-12-25"]
   createdAt DateTime @default(now())
 
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -145,5 +149,17 @@ model Coupon {
   tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, code])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  tenantId  String
+  type      String   // "appointment", "update", "maintenance"
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 

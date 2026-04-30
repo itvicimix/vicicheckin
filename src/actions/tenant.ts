@@ -154,3 +154,26 @@ export async function updateLuckyWheel(tenantId: string, data: { enabled?: boole
     return { success: false, error: "Lỗi hệ thống khi cập nhật Vòng quay may mắn" };
   }
 }
+
+export async function updateWorkingHours(tenantId: string, data: { workingHours?: any, holidays?: string[] }) {
+  try {
+    const updateData: any = {};
+    if (data.workingHours !== undefined) {
+      updateData.workingHours = JSON.stringify(data.workingHours);
+    }
+    if (data.holidays !== undefined) {
+      updateData.holidays = JSON.stringify(data.holidays);
+    }
+
+    const tenant = await prisma.tenant.update({
+      where: { id: tenantId },
+      data: updateData
+    });
+
+    revalidatePath(`/${tenant.slug}/admin/working-hours`);
+    return { success: true, data: JSON.parse(JSON.stringify(tenant)) };
+  } catch (error: any) {
+    console.error("Failed to update working hours:", error);
+    return { success: false, error: "Lỗi hệ thống khi cập nhật giờ làm việc" };
+  }
+}

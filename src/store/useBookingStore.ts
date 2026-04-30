@@ -5,12 +5,14 @@ export type Service = {
   name: string;
   duration: number;
   price: string;
+  category?: string;
 };
 
 export type Staff = {
   id: string;
   name: string;
   avatarUrl?: string;
+  timeOffDates?: string[];
 };
 
 interface BookingState {

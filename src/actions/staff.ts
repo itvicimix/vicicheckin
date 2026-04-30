@@ -68,3 +68,22 @@ export async function deleteStaff(id: string) {
     return { success: false, error: "Lỗi hệ thống khi xóa" };
   }
 }
+
+export async function updateStaffTimeOff(staffId: string, timeOffDates: string[]) {
+  try {
+    const staff = await prisma.staff.update({
+      where: { id: staffId },
+      data: {
+        timeOffDates: JSON.stringify(timeOffDates)
+      }
+    });
+    
+    // We can't know the exact slug here directly from staff unless we query tenant, 
+    // but revalidatePath with generic admin path might work or we can just use layout revalidate
+    revalidatePath("/[tenantSlug]/admin/working-hours", "page");
+    return { success: true, data: JSON.parse(JSON.stringify(staff)) };
+  } catch (error: any) {
+    console.error("Failed to update staff time off:", error);
+    return { success: false, error: "Lỗi hệ thống khi cập nhật ngày nghỉ" };
+  }
+}
