@@ -45,6 +45,7 @@ model Tenant {
   promotionClaims PromotionClaim[]
   coupons         Coupon[]
   notifications   Notification[]
+  pushSubscriptions PushSubscription[]
 }
 
 model Service {
@@ -58,6 +59,17 @@ model Service {
 
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   bookings Booking[]
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  tenantId  String
+  endpoint  String   @unique
+  auth      String
+  p256dh    String
+  createdAt DateTime @default(now())
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Staff {
@@ -120,8 +132,6 @@ model SystemSettings {
   updatedAt       DateTime @updatedAt
 }
 
-
-
 model PromotionClaim {
   id          String   @id @default(uuid())
   tenantId    String
@@ -162,4 +172,3 @@ model Notification {
 
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
-

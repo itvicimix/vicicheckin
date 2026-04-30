@@ -6,6 +6,7 @@ import { sendSMS } from "./sms";
 import { getTenantById } from "./tenant";
 import { getSystemSettings } from "./settings";
 import { createNotification } from "./notification";
+import { sendPushNotification } from "./push";
 
 function replaceSmsVariables(template: string, data: any) {
   return template
@@ -161,6 +162,17 @@ export async function createBooking({
         "New Appointment",
         `${customerName} just booked ${service.name} on ${date} at ${time}.`
       );
+
+      // 8. Trigger Web Push Notification
+      const tenant = await getTenantById(tenantId);
+      if (tenant) {
+        await sendPushNotification(
+          tenantId,
+          "Lịch hẹn mới! 📅",
+          `${customerName} vừa đặt ${service.name} vào ${date} lúc ${time}`,
+          `/${tenant.slug}/admin/appointments`
+        );
+      }
     } catch (notifError) {
       console.error("Failed to create notification:", notifError);
     }

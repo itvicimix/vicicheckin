@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
+import PushNotificationManager from "@/components/admin/PushNotificationManager";
 import { 
   LayoutDashboard, 
   CalendarDays, 
@@ -232,6 +233,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <h1 className={`font-semibold md:hidden truncate ml-2 ${isDarkMode ? "text-white" : "text-gray-800"}`}>Dashboard</h1>
           
           <div className="flex items-center gap-2 md:gap-4 ml-auto relative">
+            {/* Push Notifications */}
+            {tenant?.id && <PushNotificationManager tenantId={tenant.id} />}
+            
             {/* Theme Toggle */}
             <button 
               onClick={toggleTheme}
