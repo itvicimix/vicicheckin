@@ -4,11 +4,16 @@ import { prisma } from "@/lib/prisma";
 import webpush from "web-push";
 
 // Configure web-push
-webpush.setVapidDetails(
-  "mailto:admin@vicimis.com",
-  process.env.VAPID_PUBLIC_KEY || "",
-  process.env.VAPID_PRIVATE_KEY || ""
-);
+const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "";
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
+
+if (vapidPublicKey && vapidPrivateKey) {
+  webpush.setVapidDetails(
+    "mailto:admin@vicimis.com",
+    vapidPublicKey,
+    vapidPrivateKey
+  );
+}
 
 export async function savePushSubscription(tenantId: string, subscription: any) {
   try {
