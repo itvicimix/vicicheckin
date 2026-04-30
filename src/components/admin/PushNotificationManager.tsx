@@ -41,7 +41,7 @@ export default function PushNotificationManager({ tenantId }: { tenantId: string
       }
 
       const registration = await registerServiceWorker();
-      const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BNMpEyosk2BeP2VZ4CvmwgU-uEaJP3UUawBhoGdoJav996XH7MWBRqt8-eUB0kP-3REeS75Nm-ra04zsESuaOQ4";
       
       if (!publicVapidKey) {
         throw new Error("VAPID_KEY_MISSING");

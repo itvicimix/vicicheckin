@@ -4,8 +4,9 @@ import { prisma } from "@/lib/prisma";
 import webpush from "web-push";
 
 // Configure web-push
-const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "";
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
+// We add hardcoded fallbacks here so it works immediately on Hostinger without needing to configure .env
+const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "BNMpEyosk2BeP2VZ4CvmwgU-uEaJP3UUawBhoGdoJav996XH7MWBRqt8-eUB0kP-3REeS75Nm-ra04zsESuaOQ4";
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "gZ9_hK5gNjUa2XIIu51r8YeCpU_Y1cPV008ctEHoDNU";
 
 if (vapidPublicKey && vapidPrivateKey) {
   webpush.setVapidDetails(
