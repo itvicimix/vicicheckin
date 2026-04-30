@@ -64,7 +64,7 @@ export default function PushNotificationManager({ tenantId }: { tenantId: string
       } else if (error.message === "Permission denied") {
         alert("Vui lòng cấp quyền gửi thông báo trong cài đặt trình duyệt của bạn.");
       } else {
-        alert("Không thể đăng ký nhận thông báo. Vui lòng thử lại sau.");
+        alert("Lỗi: " + (error.message || JSON.stringify(error)));
       }
     } finally {
       setIsLoading(false);
