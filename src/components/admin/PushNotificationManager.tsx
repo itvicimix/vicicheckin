@@ -34,11 +34,17 @@ export default function PushNotificationManager({ tenantId }: { tenantId: string
   async function handleSubscribe() {
     setIsLoading(true);
     try {
+      // 1. Request permission first
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        throw new Error("Permission denied");
+      }
+
       const registration = await registerServiceWorker();
       const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       
       if (!publicVapidKey) {
-        throw new Error("VAPID public key not found");
+        throw new Error("VAPID_KEY_MISSING");
       }
 
       const subscription = await subscribeUser(registration, publicVapidKey);
@@ -51,9 +57,15 @@ export default function PushNotificationManager({ tenantId }: { tenantId: string
           alert("Failed to save subscription on server");
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error subscribing:", error);
-      alert("Please enable notifications in your browser settings.");
+      if (error.message === "VAPID_KEY_MISSING") {
+        alert("Lỗi hệ thống: Chưa cấu hình VAPID Key trên Server (Vercel). Vui lòng thêm biến NEXT_PUBLIC_VAPID_PUBLIC_KEY vào môi trường.");
+      } else if (error.message === "Permission denied") {
+        alert("Vui lòng cấp quyền gửi thông báo trong cài đặt trình duyệt của bạn.");
+      } else {
+        alert("Không thể đăng ký nhận thông báo. Vui lòng thử lại sau.");
+      }
     } finally {
       setIsLoading(false);
     }
