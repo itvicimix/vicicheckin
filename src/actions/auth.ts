@@ -46,6 +46,7 @@ export async function loginAdmin(tenantSlug: string, email: string, password: st
       sameSite: "lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60, // 7 days
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
     return { success: true };
