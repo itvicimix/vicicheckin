@@ -59,7 +59,7 @@ export default function PushNotificationManager({ tenantId, variant = "icon" }: 
         if (result.success) {
           setIsSubscribed(true);
         } else {
-          alert("Failed to save subscription on server");
+          alert(`Failed to save subscription: ${result.error}`);
         }
       }
     } catch (error: any) {

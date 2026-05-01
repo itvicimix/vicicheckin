@@ -40,9 +40,9 @@ export async function savePushSubscription(tenantId: string, subscription: any) 
     });
 
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error saving push subscription:", error);
-    return { success: false, error: "Failed to save subscription" };
+    return { success: false, error: error?.message || "Failed to save subscription on server" };
   }
 }
 

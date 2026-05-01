@@ -64,7 +64,7 @@ model Service {
 model PushSubscription {
   id        String   @id @default(uuid())
   tenantId  String
-  endpoint  String   @unique
+  endpoint  String   @unique @db.VarChar(768)
   auth      String
   p256dh    String
   createdAt DateTime @default(now())
