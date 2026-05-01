@@ -66,13 +66,13 @@ export default function PushNotificationManager({ tenantId, variant = "icon" }: 
       console.error("Error subscribing:", error);
       const errorMsg = error.message?.toLowerCase() || "";
       if (errorMsg === "vapid_key_missing") {
-        alert("Lỗi hệ thống: Chưa cấu hình VAPID Key trên Server (Vercel). Vui lòng thêm biến NEXT_PUBLIC_VAPID_PUBLIC_KEY vào môi trường.");
+        alert("System error: VAPID Key not configured on Server. Please add NEXT_PUBLIC_VAPID_PUBLIC_KEY to environment variables.");
       } else if (errorMsg === "permission denied") {
-        alert("Vui lòng cấp quyền gửi thông báo trong cài đặt trình duyệt của bạn.");
+        alert("Please grant notification permissions in your browser settings.");
       } else if (errorMsg.includes("push service not available") || errorMsg.includes("registration failed")) {
-        alert("Trình duyệt này không hỗ trợ nhận thông báo Push (Push Service Not Available).\n\n• Trên iOS/iPhone: Vui lòng 'Thêm vào màn hình chính' (Add to Home Screen) rồi mở từ màn hình chính để bật thông báo.\n• Trên PC: Vui lòng sử dụng Google Chrome hoặc Edge.");
+        alert("This browser does not support Push Notifications.\n\n• On iOS/iPhone: Please 'Add to Home Screen' and open from there to enable notifications.\n• On PC: Please use Google Chrome or Edge.");
       } else {
-        alert("Lỗi: " + (error.message || JSON.stringify(error)));
+        alert("Error: " + (error.message || JSON.stringify(error)));
       }
     } finally {
       setIsLoading(false);
@@ -101,13 +101,13 @@ export default function PushNotificationManager({ tenantId, variant = "icon" }: 
           <div>
             <h4 className="font-bold">Push Notifications</h4>
             <p className={`text-xs ${isSubscribed ? "text-green-600" : "text-gray-500"}`}>
-              {isSubscribed ? "Đã bật thông báo trên thiết bị này" : "Nhận thông báo khi có lịch đặt mới"}
+              {isSubscribed ? "Notifications enabled on this device" : "Get notified when there's a new booking"}
             </p>
           </div>
         </div>
         {!isSubscribed && !isLoading && (
           <div className="text-xs font-bold bg-primary text-white px-3 py-1.5 rounded-lg">
-            Bật ngay
+            Enable now
           </div>
         )}
       </button>

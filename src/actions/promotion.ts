@@ -91,7 +91,7 @@ export async function claimPromotion(tenantId: string, phone: string) {
     return { success: true, prize: claim.prize };
   } catch (error) {
     console.error("Error claiming promotion:", error);
-    return { success: false, error: "Lỗi hệ thống khi quay thưởng" };
+    return { success: false, error: "System error while claiming promotion" };
   }
 }
 

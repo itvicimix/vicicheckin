@@ -168,8 +168,8 @@ export async function createBooking({
       if (tenant) {
         await sendPushNotification(
           tenantId,
-          "Lịch hẹn mới! 📅",
-          `${customerName} vừa đặt ${service.name} vào ${date} lúc ${time}`,
+          "New Appointment! 📅",
+          `${customerName} just booked ${service.name} on ${date} at ${time}`,
           `/${tenant.slug}/admin/appointments`
         );
       }

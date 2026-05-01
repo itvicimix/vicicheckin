@@ -24,18 +24,18 @@ export function ChatbotWidget({ tenant }: ChatbotWidgetProps) {
 
   useEffect(() => {
     if (isOpen && config && chatHistory.length === 0) {
-      setChatHistory([{ role: 'bot', text: config.welcomeMessage || "Xin chào! Chúng tôi có thể giúp gì cho bạn hôm nay?" }]);
+      setChatHistory([{ role: 'bot', text: config.welcomeMessage || "Hello! How can we help you today?" }]);
     }
   }, [isOpen, config]);
 
   if (!tenant?.chatbotEnabled || !config) return null;
 
   const defaultFaq = [
-    { q: "Tôi muốn đặt lịch hẹn", a: "Dạ vâng, bạn có thể ấn nút 'Start Live Chat' ở dưới để gặp nhân viên hỗ trợ, hoặc đặt trực tiếp qua giao diện web nhé!" },
-    { q: "Xin báo giá dịch vụ", a: "Bảng giá dịch vụ tùy thuộc vào yêu cầu cụ thể. Bạn vui lòng chat trực tiếp để được tư vấn chi tiết hơn." },
-    { q: "Giờ mở cửa của tiệm", a: "Chúng tôi mở cửa từ 9:00 Sáng đến 8:00 Tối mỗi ngày." },
-    { q: "Vị trí tiệm ở đâu?", a: "Vui lòng kéo xuống cuối trang web hoặc click vào nút Chat để nhận vị trí chính xác." },
-    { q: "Tôi cần tư vấn thêm", a: "Dạ vâng, bạn vui lòng ấn nút 'Start Live Chat' bên dưới để nhân viên của chúng tôi hỗ trợ bạn ngay lập tức!" }
+    { q: "I want to book an appointment", a: "Yes, you can click the 'Start Live Chat' button below to talk to our support staff, or book directly through our website!" },
+    { q: "Service pricing", a: "Service pricing depends on specific requirements. Please chat with us for more details." },
+    { q: "Opening hours", a: "We are open from 9:00 AM to 8:00 PM every day." },
+    { q: "Where are you located?", a: "Please scroll to the bottom of the website or click the Chat button to get our exact location." },
+    { q: "I need more consultation", a: "Yes, please click the 'Start Live Chat' button below and our staff will support you immediately!" }
   ];
 
   const faq = config.faq || defaultFaq;

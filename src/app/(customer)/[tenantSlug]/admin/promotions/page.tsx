@@ -128,7 +128,7 @@ export default function PromotionsPage() {
       // Validate probabilities sum to 100
       const totalProb = luckyWheelConfig.reduce((sum, item) => sum + (parseFloat(item.probability) || 0), 0);
       if (Math.abs(totalProb - 100) > 0.1) {
-        alert("Tổng tỷ lệ trúng thưởng phải bằng 100%. Hiện tại là: " + totalProb + "%");
+        alert("Total probability must be 100%. Currently it is: " + totalProb + "%");
         setIsUpdatingWheel(false);
         return;
       }
@@ -136,7 +136,7 @@ export default function PromotionsPage() {
       const result = await updateLuckyWheel(tenant.id, { config: luckyWheelConfig });
       if (result.success) {
         setTenant(result.data);
-        alert("Đã lưu cấu hình Vòng quay may mắn!");
+        alert("Lucky wheel configuration saved!");
       } else {
         alert(result.error);
       }
@@ -316,7 +316,7 @@ export default function PromotionsPage() {
             <div className="p-6 bg-orange-50/30 border-t border-orange-100">
               <div className="flex items-center gap-2 mb-4 text-gray-900 font-bold text-sm">
                 <RefreshCw size={16} className="text-orange-500" />
-                Cấu hình Vòng quay (5 giải thưởng)
+                Wheel Configuration (5 prizes)
               </div>
               <div className="space-y-3">
                 {luckyWheelConfig.map((item, idx) => (
@@ -362,7 +362,7 @@ export default function PromotionsPage() {
                 ))}
               </div>
               <p className="text-[10px] text-orange-600 mt-2 italic text-center">
-                * Tổng tỷ lệ (Prob) phải bằng 100%
+                * Total probability (Prob) must equal 100%
               </p>
             </div>
 
@@ -375,7 +375,7 @@ export default function PromotionsPage() {
                   // Validate probabilities sum to 100
                   const totalProb = luckyWheelConfig.reduce((sum, item) => sum + (parseFloat(item.probability) || 0), 0);
                   if (Math.abs(totalProb - 100) > 0.1) {
-                    alert("Tổng tỷ lệ trúng thưởng phải bằng 100%. Hiện tại là: " + totalProb + "%");
+                    alert("Total probability must be 100%. Currently it is: " + totalProb + "%");
                     return;
                   }
                   

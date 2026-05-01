@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
 export default function Home() {
-  // Redirect thẳng vào trang login của Vici Checkin
+  // Redirect directly to Vici Checkin login page
   redirect("/vici-checkin/login");
 }

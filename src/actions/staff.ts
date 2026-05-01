@@ -33,7 +33,7 @@ export async function createStaff(tenantId: string, data: any) {
     return { success: true, staff };
   } catch (error) {
     console.error("Failed to create staff:", error);
-    return { success: false, error: "Lỗi hệ thống khi tạo nhân viên" };
+    return { success: false, error: "System error while creating staff" };
   }
 }
 
@@ -54,7 +54,7 @@ export async function updateStaff(id: string, data: any) {
     return { success: true, staff };
   } catch (error) {
     console.error("Failed to update staff:", error);
-    return { success: false, error: "Lỗi hệ thống khi cập nhật nhân viên" };
+    return { success: false, error: "System error while updating staff" };
   }
 }
 
@@ -65,7 +65,7 @@ export async function deleteStaff(id: string) {
     return { success: true };
   } catch (error) {
     console.error("Failed to delete staff:", error);
-    return { success: false, error: "Lỗi hệ thống khi xóa" };
+    return { success: false, error: "System error while deleting" };
   }
 }
 
@@ -84,6 +84,6 @@ export async function updateStaffTimeOff(staffId: string, timeOffDates: string[]
     return { success: true, data: JSON.parse(JSON.stringify(staff)) };
   } catch (error: any) {
     console.error("Failed to update staff time off:", error);
-    return { success: false, error: "Lỗi hệ thống khi cập nhật ngày nghỉ" };
+    return { success: false, error: "System error while updating days off" };
   }
 }

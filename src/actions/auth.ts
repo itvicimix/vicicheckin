@@ -25,7 +25,7 @@ export async function loginAdmin(tenantSlug: string, email: string, password: st
       : (tenant.adminEmail === email && tenant.adminPassword === password);
 
     if (!isValidPassword) {
-      return { success: false, error: "Sai email hoặc mật khẩu!" };
+      return { success: false, error: "Invalid email or password!" };
     }
 
     // Create JWT
@@ -52,7 +52,7 @@ export async function loginAdmin(tenantSlug: string, email: string, password: st
     return { success: true };
   } catch (error) {
     console.error("Login error:", error);
-    return { success: false, error: "Đã xảy ra lỗi hệ thống." };
+    return { success: false, error: "A system error occurred." };
   }
 }
 

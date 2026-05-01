@@ -326,7 +326,7 @@ export default function AdminDashboardPage() {
               {tenant?.luckyWheelEnabled && (
                 <div className="mt-4 flex items-center gap-2 text-xs text-orange-700 bg-white/50 p-2 rounded-lg">
                   <Gift size={14} />
-                  <span>Cửa hàng đang có chương trình quay thưởng cho khách mới!</span>
+                  <span>The store has a lucky spin program for new customers!</span>
                 </div>
               )}
             </div>

@@ -36,7 +36,7 @@ export default function PromotionsPage() {
     setError("");
 
     if (!phone || phone.length < 10) {
-      setError("Vui lòng nhập số điện thoại hợp lệ.");
+      setError("Please enter a valid phone number.");
       return;
     }
 
@@ -49,11 +49,11 @@ export default function PromotionsPage() {
       localStorage.setItem("customer_phone", phone);
     } else {
       if (result.reason === "already_customer") {
-        setError("Rất tiếc! Số điện thoại này đã từng đặt hẹn nên không thể tham gia chương trình khách hàng mới.");
+        setError("Sorry! This phone number has already been used for booking and is not eligible for the new customer promotion.");
       } else if (result.reason === "already_spun") {
-        setError("Bạn đã sử dụng lượt quay của mình rồi!");
+        setError("You have already used your spin!");
       } else {
-        setError("Có lỗi xảy ra. Vui lòng thử lại.");
+        setError("An error occurred. Please try again.");
       }
     }
     setIsChecking(false);
@@ -64,7 +64,7 @@ export default function PromotionsPage() {
     if (result.success && result.prize) {
       return result.prize;
     } else {
-      setError(result.error || "Không thể quay thưởng");
+      setError(result.error || "Cannot spin the wheel");
       return null;
     }
   };
@@ -90,13 +90,13 @@ export default function PromotionsPage() {
         <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-400">
           <AlertCircle size={40} />
         </div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Chương trình đã kết thúc</h2>
-        <p className="text-gray-500 max-w-md">Rất tiếc, hiện tại không có chương trình khuyến mãi nào đang diễn ra. Vui lòng quay lại sau!</p>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">The promotion has ended</h2>
+        <p className="text-gray-500 max-w-md">Sorry, there are no ongoing promotions at the moment. Please check back later!</p>
         <button 
           onClick={() => router.push(`/${tenantSlug}`)}
           className="mt-6 text-primary font-bold hover:underline"
         >
-          Quay lại trang chủ
+          Back to homepage
         </button>
       </div>
     );
@@ -124,21 +124,21 @@ export default function PromotionsPage() {
           </div>
         </div>
 
-        <h1 className="text-3xl font-black text-slate-900 mb-2">Vòng Quay May Mắn</h1>
-        <p className="text-slate-500 mb-8">Dành riêng cho khách hàng mới của <strong className="text-primary">{tenant.name}</strong></p>
+        <h1 className="text-3xl font-black text-slate-900 mb-2">Lucky Wheel</h1>
+        <p className="text-slate-500 mb-8">Exclusive for new customers of <strong className="text-primary">{tenant.name}</strong></p>
 
         {!isEligible ? (
           <form onSubmit={handleCheckEligibility} className="space-y-4 max-w-sm mx-auto">
             <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 text-sm text-slate-700 mb-6 flex flex-col items-center">
               <Gift className="w-8 h-8 text-primary mb-2" />
-              <span>Nhập số điện thoại của bạn để kiểm tra điều kiện tham gia và nhận quà tặng hoặc giảm giá ngay lập tức!</span>
+              <span>Enter your phone number to check eligibility and get instant gifts or discounts!</span>
             </div>
 
             <div className="relative">
               <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
               <input
                 type="tel"
-                placeholder="Số điện thoại của bạn..."
+                placeholder="Your phone number..."
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-lg font-medium"
@@ -159,13 +159,13 @@ export default function PromotionsPage() {
               className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50"
             >
               {isChecking ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
-              Tiếp tục
+              Continue
             </button>
           </form>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-green-50 text-green-700 font-medium py-2 px-4 rounded-full inline-block mb-4 text-sm">
-              ✨ Chúc mừng! Bạn đủ điều kiện quay thưởng.
+              ✨ Congratulations! You are eligible to spin.
             </div>
             <LuckyWheel 
               onSpin={handleSpin} 

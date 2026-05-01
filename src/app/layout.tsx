@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "Vici Salon Platform",
-  description: "Nền tảng đặt lịch thông minh",
+  description: "Smart booking platform",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

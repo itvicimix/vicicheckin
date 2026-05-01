@@ -4,8 +4,8 @@ import twilio from 'twilio';
 import { getSystemSettings } from './settings';
 
 /**
- * Gửi SMS đến một hoặc nhiều khách hàng bằng Twilio.
- * Cấu hình được lấy từ bảng SystemSettings do Super Admin quản lý.
+ * Send SMS to one or more customers using Twilio.
+ * Configuration is fetched from SystemSettings managed by Super Admin.
  */
 export async function sendSMSPromotion(message: string, recipients: string[]) {
   try {
@@ -14,7 +14,7 @@ export async function sendSMSPromotion(message: string, recipients: string[]) {
     if (!settings || !settings.twilioSid || !settings.twilioAuthToken || !settings.twilioPhone) {
       return {
         success: false,
-        error: 'Hệ thống chưa cấu hình thông tin xác thực Twilio. Vui lòng liên hệ Super Admin.',
+        error: 'System has not configured Twilio credentials. Please contact Super Admin.',
       };
     }
 
@@ -26,7 +26,7 @@ export async function sendSMSPromotion(message: string, recipients: string[]) {
 
     const results = await Promise.allSettled(
       recipients.map(async (to) => {
-        // Có thể format lại số điện thoại (VD: thêm +84 nếu ở VN) ở đây trước khi gửi
+        // Can format phone number here before sending
         const messageResponse = await client.messages.create({
           body: message,
           from: fromNumber,
@@ -39,34 +39,34 @@ export async function sendSMSPromotion(message: string, recipients: string[]) {
     const successful = results.filter((r) => r.status === 'fulfilled').length;
     const failed = results.filter((r) => r.status === 'rejected').length;
     
-    // Nếu tất cả đều thất bại, báo lỗi rõ hơn từ Twilio API
+    // If all fail, report clearer error from Twilio API
     if (failed > 0 && successful === 0) {
        const firstError = results.find((r) => r.status === 'rejected') as PromiseRejectedResult;
        return {
          success: false,
-         error: firstError.reason?.message || 'Lỗi gửi tin nhắn từ Twilio (ví dụ: sai số ĐT hoặc sai cấu hình)',
+         error: firstError.reason?.message || 'Error sending SMS from Twilio (e.g. wrong phone number or bad config)',
        };
     }
 
     return {
       success: true,
-      message: `Đã gửi thành công ${successful} tin nhắn. ${failed > 0 ? `${failed} tin thất bại.` : ''}`,
+      message: `Successfully sent ${successful} messages. ${failed > 0 ? `${failed} messages failed.` : ''}`,
       details: {
         successful,
         failed,
       },
     };
   } catch (error: any) {
-    console.error('Lỗi khi gửi SMS Twilio:', error);
+    console.error('Error sending Twilio SMS:', error);
     return {
       success: false,
-      error: error.message || 'Có lỗi xảy ra khi gửi SMS (Có thể cấu hình Twilio sai định dạng)',
+      error: error.message || 'Error sending SMS (Twilio config might be malformed)',
     };
   }
 }
 
 /**
- * Gửi một tin nhắn SMS đơn lẻ.
+ * Send a single SMS message.
  */
 export async function sendSMS(to: string, message: string) {
   try {

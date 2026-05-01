@@ -22,11 +22,11 @@ export async function getCustomers(tenantId: string) {
     // Transform to include aggregated data and ensure plain object
     return customers.map(c => {
       const points = c.points || 0;
-      let tier = "Thường";
-      if (points >= 2000) tier = "Kim Cương";
-      else if (points >= 1000) tier = "Vàng";
-      else if (points >= 500) tier = "Bạc";
-      else if (points > 100) tier = "Đồng";
+      let tier = "Regular";
+      if (points >= 2000) tier = "Diamond";
+      else if (points >= 1000) tier = "Gold";
+      else if (points >= 500) tier = "Silver";
+      else if (points > 100) tier = "Bronze";
 
       return {
         id: c.id,
@@ -93,7 +93,7 @@ export async function syncCustomersData(tenantId: string) {
     return { success: true };
   } catch (error) {
     console.error("Sync error:", error);
-    return { success: false, error: "Lỗi đồng bộ dữ liệu" };
+    return { success: false, error: "Data sync error" };
   }
 }
 
@@ -113,7 +113,7 @@ export async function createCustomer(tenantId: string, data: { name: string, pho
     return { success: true };
   } catch (error) {
     console.error("Failed to create customer:", error);
-    return { success: false, error: "Lỗi hệ thống khi tạo khách hàng" };
+    return { success: false, error: "System error while creating customer" };
   }
 }
 
@@ -124,7 +124,7 @@ export async function deleteCustomer(id: string) {
     return { success: true };
   } catch (error) {
     console.error("Failed to delete customer:", error);
-    return { success: false, error: "Lỗi hệ thống khi xóa khách hàng" };
+    return { success: false, error: "System error while deleting customer" };
   }
 }
 
@@ -144,14 +144,14 @@ export async function updateCustomer(id: string, data: { name: string, phone?: s
     return { success: true };
   } catch (error) {
     console.error("Failed to update customer:", error);
-    return { success: false, error: "Lỗi hệ thống khi cập nhật khách hàng" };
+    return { success: false, error: "System error while updating customer" };
   }
 }
 
 export async function importCustomers(tenantId: string, customersData: { name: string, phone?: string, email?: string }[]) {
   try {
     if (!customersData || customersData.length === 0) {
-      return { success: false, error: "Không có dữ liệu khách hàng để nhập" };
+      return { success: false, error: "No customer data to import" };
     }
 
     const data = customersData.map(c => ({
@@ -171,7 +171,7 @@ export async function importCustomers(tenantId: string, customersData: { name: s
     return { success: true, count: result.count };
   } catch (error) {
     console.error("Failed to import customers:", error);
-    return { success: false, error: "Lỗi hệ thống khi nhập dữ liệu khách hàng" };
+    return { success: false, error: "System error while importing customer data" };
   }
 }
 
@@ -185,6 +185,6 @@ export async function deleteCustomers(ids: string[]) {
     return { success: true };
   } catch (error) {
     console.error("Failed to bulk delete customers:", error);
-    return { success: false, error: "Lỗi hệ thống khi xóa nhiều khách hàng" };
+    return { success: false, error: "System error while bulk deleting customers" };
   }
 }

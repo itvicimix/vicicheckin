@@ -18,7 +18,7 @@ export async function getSystemSettings() {
 
     return settings;
   } catch (error) {
-    console.error('Lỗi khi lấy SystemSettings:', error);
+    console.error('Error fetching SystemSettings:', error);
     return null;
   }
 }
@@ -41,7 +41,7 @@ export async function updateTwilioSettings(data: { twilioSid: string; twilioAuth
     });
     return { success: true, settings };
   } catch (error: any) {
-    console.error('Lỗi khi cập nhật SystemSettings:', error);
+    console.error('Error updating SystemSettings:', error);
     return { success: false, error: error.message };
   }
 }

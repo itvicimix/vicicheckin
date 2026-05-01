@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Lock, Mail, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
 import { loginAdmin } from "@/actions/auth";
+import { getTenantBySlug } from "@/actions/tenant";
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function TenantLogin() {
   const router = useRouter();
@@ -20,6 +22,15 @@ export default function TenantLogin() {
     { success: false, error: "" }
   );
 
+  const [tenant, setTenant] = useState<any>(null);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    getTenantBySlug(tenantSlug).then((data) => {
+      if (data) setTenant(data);
+    });
+  }, [tenantSlug]);
+
   useEffect(() => {
     if (state.success) {
       router.push(`/${tenantSlug}/admin/calendar`);
@@ -30,15 +41,19 @@ export default function TenantLogin() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <div className="w-16 h-16 bg-gray-900 rounded-xl flex items-center justify-center text-white font-bold text-3xl shadow-lg uppercase">
-            {tenantSlug.charAt(0)}
-          </div>
+          {tenant?.logo ? (
+            <img src={tenant.logo} alt={tenant?.name || tenantSlug} className="w-16 h-16 rounded-xl object-cover shadow-lg" />
+          ) : (
+            <div className="w-16 h-16 bg-gray-900 rounded-xl flex items-center justify-center text-white font-bold text-3xl shadow-lg uppercase">
+              {tenant?.name ? tenant.name.charAt(0) : tenantSlug.charAt(0)}
+            </div>
+          )}
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Admin Login
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Dashboard for /{tenantSlug}
+          Dashboard for {tenant ? tenant.name : `/${tenantSlug}`}
         </p>
       </div>
 
@@ -93,7 +108,7 @@ export default function TenantLogin() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center">
               <div className="flex items-center">
                 <input
                   id="remember-me"
@@ -105,18 +120,19 @@ export default function TenantLogin() {
                   Remember me
                 </label>
               </div>
+            </div>
 
-              <div className="text-sm">
-                <a href="#" className="font-medium text-primary hover:text-primary-dark">
-                  Forgot password?
-                </a>
-              </div>
+            <div className="flex justify-center">
+              <ReCAPTCHA
+                sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+                onChange={(token) => setRecaptchaToken(token)}
+              />
             </div>
 
             <div>
               <button
                 type="submit"
-                disabled={isPending}
+                disabled={isPending || !recaptchaToken}
                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors items-center gap-2 disabled:opacity-70"
               >
                 {isPending ? (

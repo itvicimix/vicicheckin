@@ -32,7 +32,7 @@ export async function createService(tenantId: string, data: any) {
     return { success: true, service: JSON.parse(JSON.stringify(service)) };
   } catch (error) {
     console.error("Failed to create service:", error);
-    return { success: false, error: "Lỗi hệ thống khi tạo dịch vụ" };
+    return { success: false, error: "System error while creating service" };
   }
 }
 
@@ -43,7 +43,7 @@ export async function deleteService(id: string) {
     return { success: true };
   } catch (error) {
     console.error("Failed to delete service:", error);
-    return { success: false, error: "Lỗi hệ thống khi xóa" };
+    return { success: false, error: "System error while deleting" };
   }
 }
 
@@ -63,7 +63,7 @@ export async function updateService(id: string, data: any) {
     return { success: true, service: JSON.parse(JSON.stringify(service)) };
   } catch (error) {
     console.error("Failed to update service:", error);
-    return { success: false, error: "Lỗi hệ thống khi cập nhật" };
+    return { success: false, error: "System error while updating" };
   }
 }
 
@@ -85,6 +85,6 @@ export async function importServices(tenantId: string, services: any[]) {
     return { success: true, count: dataToCreate.length };
   } catch (error) {
     console.error("Failed to import services:", error);
-    return { success: false, error: "Lỗi hệ thống khi import dịch vụ" };
+    return { success: false, error: "System error while importing services" };
   }
 }

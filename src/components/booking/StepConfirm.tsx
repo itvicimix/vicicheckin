@@ -39,7 +39,7 @@ export function StepConfirm({ tenant }: { tenant: any }) {
         state.setCouponDiscount(result.coupon.discountValue);
         alert(`Success! ${result.coupon.name} applied: ${result.coupon.discountValue}% off.`);
       } else {
-        alert(result.error || "Mã giảm giá không hợp lệ");
+        alert(result.error || "Invalid promo code");
         state.setCouponDiscount(0);
       }
     } catch (err) {
@@ -193,14 +193,14 @@ export function StepConfirm({ tenant }: { tenant: any }) {
           <div className="mt-8 p-6 bg-gradient-to-br from-orange-50 to-pink-50 rounded-2xl border border-orange-100 shadow-sm w-full max-w-sm animate-pulse-slow">
             <div className="flex items-center gap-3 mb-3 justify-center">
               <Gift className="text-orange-500" size={24} />
-              <h4 className="font-bold text-gray-900">May mắn đang chờ bạn!</h4>
+              <h4 className="font-bold text-gray-900">Luck is waiting for you!</h4>
             </div>
-            <p className="text-sm text-gray-600 mb-4">Bạn là khách hàng mới? Quay ngay vòng quay may mắn để nhận thêm voucher giảm giá cho lần hẹn tới!</p>
+            <p className="text-sm text-gray-600 mb-4">Are you a new customer? Spin the lucky wheel now to get an extra discount voucher for your next appointment!</p>
             <button 
               onClick={() => window.location.href = `/${tenant.slug}/promotions`}
               className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-md shadow-orange-200"
             >
-              Thử vận may ngay!
+              Try your luck now!
             </button>
           </div>
         )}

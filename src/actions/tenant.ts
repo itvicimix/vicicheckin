@@ -45,12 +45,12 @@ export async function createTenant(data: any) {
     const { name, slug, adminEmail, adminPassword, itPassword, themeColor, logo, location, phone, payments } = data;
 
     if (!name || !slug || !adminEmail || !adminPassword) {
-      return { success: false, error: "Vui lòng điền đầy đủ các trường bắt buộc (Tên, Slug, Email, Password)" };
+      return { success: false, error: "Please fill all required fields (Name, Slug, Email, Password)" };
     }
 
     const existing = await prisma.tenant.findUnique({ where: { slug } });
     if (existing) {
-      return { success: false, error: "URL Slug này đã tồn tại, vui lòng chọn tên khác." };
+      return { success: false, error: "This URL Slug already exists, please choose another name." };
     }
 
     const tenant = await prisma.tenant.create({
@@ -73,7 +73,7 @@ export async function createTenant(data: any) {
     return { success: true, data: JSON.parse(JSON.stringify(tenant)) };
   } catch (error) {
     console.error("Failed to create tenant:", error);
-    return { success: false, error: "Đã xảy ra lỗi khi tạo tiệm vào Database." };
+    return { success: false, error: "An error occurred while creating tenant in database." };
   }
 }
 
@@ -105,7 +105,7 @@ export async function updateTenantSettings(tenantId: string, data: any) {
     return { success: true, data: JSON.parse(JSON.stringify(tenant)) };
   } catch (error: any) {
     console.error("Failed to update tenant settings:", error);
-    return { success: false, error: `Lỗi hệ thống: ${error.message || "Không rõ nguyên nhân"}` };
+    return { success: false, error: `System error: ${error.message || "Unknown cause"}` };
   }
 }
 
@@ -128,7 +128,7 @@ export async function updateLuckyWheel(tenantId: string, data: { enabled?: boole
           const diffDays = (new Date().getTime() - lastDisabled.getTime()) / (1000 * 3600 * 24);
           if (diffDays < 7) {
             const remaining = Math.ceil(7 - diffDays);
-            return { success: false, error: `Bạn phải đợi thêm ${remaining} ngày nữa mới có thể bật lại Vòng quay may mắn.` };
+            return { success: false, error: `You must wait another ${remaining} days before you can turn on the lucky wheel again.` };
           }
         }
         updateData.luckyWheelEnabled = true;
@@ -152,7 +152,7 @@ export async function updateLuckyWheel(tenantId: string, data: { enabled?: boole
     return { success: true, data: JSON.parse(JSON.stringify(tenant)) };
   } catch (error: any) {
     console.error("Failed to update lucky wheel:", error);
-    return { success: false, error: "Lỗi hệ thống khi cập nhật Vòng quay may mắn" };
+    return { success: false, error: "System error while updating lucky wheel" };
   }
 }
 
@@ -175,6 +175,6 @@ export async function updateWorkingHours(tenantId: string, data: { workingHours?
     return { success: true, data: JSON.parse(JSON.stringify(tenant)) };
   } catch (error: any) {
     console.error("Failed to update working hours:", error);
-    return { success: false, error: "Lỗi hệ thống khi cập nhật giờ làm việc" };
+    return { success: false, error: "System error while updating working hours" };
   }
 }

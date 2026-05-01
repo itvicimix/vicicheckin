@@ -206,8 +206,8 @@ export default function CustomersPage() {
       }
 
       const headers = rows[0].toLowerCase().split(",");
-      const nameIdx = headers.findIndex(h => h.includes("name") || h.includes("tên"));
-      const phoneIdx = headers.findIndex(h => h.includes("phone") || h.includes("sđt") || h.includes("sdt"));
+      const nameIdx = headers.findIndex(h => h.includes("name"));
+      const phoneIdx = headers.findIndex(h => h.includes("phone"));
       const emailIdx = headers.findIndex(h => h.includes("email"));
 
       if (nameIdx === -1) {
@@ -447,10 +447,10 @@ export default function CustomersPage() {
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className={`inline-flex w-fit items-center px-2 py-0.5 rounded text-xs font-medium ${
-                        c.tier === "Diamond" || c.tier === "Kim cương" ? "bg-purple-100 text-purple-800" :
-                        c.tier === "Gold" || c.tier === "Vàng" ? "bg-yellow-100 text-yellow-800" :
-                        c.tier === "Silver" || c.tier === "Bạc" ? "bg-slate-200 text-slate-700" :
-                        c.tier === "Bronze" || c.tier === "Đồng" ? "bg-amber-100 text-amber-800" :
+                        c.tier === "Diamond" ? "bg-purple-100 text-purple-800" :
+                        c.tier === "Gold" ? "bg-yellow-100 text-yellow-800" :
+                        c.tier === "Silver" ? "bg-slate-200 text-slate-700" :
+                        c.tier === "Bronze" ? "bg-amber-100 text-amber-800" :
                         "bg-gray-100 text-gray-600"
                       }`}>
                         {c.tier}
@@ -522,10 +522,10 @@ export default function CustomersPage() {
                 </div>
                 <div className="flex flex-col items-end gap-1">
                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                    c.tier === "Diamond" || c.tier === "Kim cương" ? "bg-purple-100 text-purple-800" :
-                    c.tier === "Gold" || c.tier === "Vàng" ? "bg-yellow-100 text-yellow-800" :
-                    c.tier === "Silver" || c.tier === "Bạc" ? "bg-slate-200 text-slate-700" :
-                    c.tier === "Bronze" || c.tier === "Đồng" ? "bg-amber-100 text-amber-800" :
+                    c.tier === "Diamond" ? "bg-purple-100 text-purple-800" :
+                    c.tier === "Gold" ? "bg-yellow-100 text-yellow-800" :
+                    c.tier === "Silver" ? "bg-slate-200 text-slate-700" :
+                    c.tier === "Bronze" ? "bg-amber-100 text-amber-800" :
                     "bg-gray-100 text-gray-600"
                   }`}>
                     {c.tier}
