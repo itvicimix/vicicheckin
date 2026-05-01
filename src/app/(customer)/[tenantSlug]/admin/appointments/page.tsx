@@ -22,10 +22,10 @@ export default function AppointmentsPage() {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return b.customerName?.toLowerCase().includes(q) ||
-           b.customerPhone?.includes(q) ||
-           b.service?.name?.toLowerCase().includes(q) ||
-           b.staff?.name?.toLowerCase().includes(q) ||
-           b.id.toLowerCase().includes(q);
+      b.customerPhone?.includes(q) ||
+      b.service?.name?.toLowerCase().includes(q) ||
+      b.staff?.name?.toLowerCase().includes(q) ||
+      b.id.toLowerCase().includes(q);
   });
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export default function AppointmentsPage() {
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     if (!tenant) return;
-    
+
     setUpdatingId(id);
     try {
       const result = await updateBookingStatus(id, newStatus, tenant.id);
@@ -80,13 +80,13 @@ export default function AppointmentsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "Pending":
-        return <span className="flex items-center gap-1 text-yellow-600 bg-yellow-50 px-2 py-1 rounded-md text-xs font-semibold"><AlertCircle size={12}/> Pending</span>;
+        return <span className="flex items-center gap-1 text-yellow-600 bg-yellow-50 px-2 py-1 rounded-md text-xs font-semibold"><AlertCircle size={12} /> Pending</span>;
       case "Approved":
-        return <span className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-md text-xs font-semibold"><CheckCircle size={12}/> Approved</span>;
+        return <span className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-md text-xs font-semibold"><CheckCircle size={12} /> Approved</span>;
       case "Reject":
       case "Cancel":
       case "Cancelled":
-        return <span className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded-md text-xs font-semibold"><XCircle size={12}/> {status}</span>;
+        return <span className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded-md text-xs font-semibold"><XCircle size={12} /> {status}</span>;
       default:
         return <span className="text-gray-600 bg-gray-100 px-2 py-1 rounded-md text-xs font-semibold">{status}</span>;
     }
@@ -105,21 +105,21 @@ export default function AppointmentsPage() {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-8rem)]">
-      
+
       {/* Header */}
       <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white">
         <div className="flex-1">
           <h2 className="text-xl md:text-2xl font-bold text-gray-900">Appointments</h2>
           <p className="text-gray-500 text-xs md:text-sm mt-1">Manage and track all booking statuses.</p>
         </div>
-        
+
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search appointments..." 
+            placeholder="Search appointments..."
             className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
           />
         </div>
@@ -161,7 +161,7 @@ export default function AppointmentsPage() {
                   <td className="px-6 py-4">
                     <div className="text-gray-900 font-medium">{b.service?.name || "Unknown Service"}</div>
                     <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                      <User size={12}/> {b.staff?.name || "Any Staff"}
+                      <User size={12} /> {b.staff?.name || "Any Staff"}
                     </div>
                     {b.notes && (
                       <div className="text-[10px] text-primary bg-primary/5 px-2 py-0.5 rounded-md mt-1.5 italic flex items-center gap-1 w-fit" title={b.notes}>
@@ -170,8 +170,8 @@ export default function AppointmentsPage() {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-gray-900 font-medium flex items-center gap-1.5"><Calendar size={14} className="text-gray-400"/> {new Date(b.date).toLocaleDateString()}</div>
-                    <div className="text-gray-500 text-xs mt-1 flex items-center gap-1.5"><Clock size={14} className="text-gray-400"/> {b.time}</div>
+                    <div className="text-gray-900 font-medium flex items-center gap-1.5"><Calendar size={14} className="text-gray-400" /> {new Date(b.date).toLocaleDateString()}</div>
+                    <div className="text-gray-500 text-xs mt-1 flex items-center gap-1.5"><Clock size={14} className="text-gray-400" /> {b.time}</div>
                   </td>
                   <td className="px-6 py-4">
                     {getStatusBadge(b.status)}
@@ -217,12 +217,12 @@ export default function AppointmentsPage() {
                 </div>
                 {getStatusBadge(b.status)}
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4 py-3 border-y border-gray-50">
                 <div>
                   <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Service</div>
                   <div className="text-sm font-medium text-gray-900 line-clamp-1">{b.service?.name}</div>
-                  <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5"><User size={10}/> {b.staff?.name}</div>
+                  <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5"><User size={10} /> {b.staff?.name}</div>
                   {b.notes && (
                     <div className="text-[10px] text-primary bg-primary/5 px-1.5 py-0.5 rounded mt-1 italic line-clamp-1" title={b.notes}>
                       📝 {b.notes}
@@ -231,8 +231,8 @@ export default function AppointmentsPage() {
                 </div>
                 <div>
                   <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Schedule</div>
-                  <div className="text-sm font-medium text-gray-900 flex items-center gap-1.5"><Calendar size={12}/> {new Date(b.date).toLocaleDateString()}</div>
-                  <div className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5"><Clock size={12}/> {b.time}</div>
+                  <div className="text-sm font-medium text-gray-900 flex items-center gap-1.5"><Calendar size={12} /> {new Date(b.date).toLocaleDateString()}</div>
+                  <div className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5"><Clock size={12} /> {b.time}</div>
                 </div>
               </div>
 
@@ -262,7 +262,7 @@ export default function AppointmentsPage() {
             Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredBookings.length)} of {filteredBookings.length} entries
           </span>
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
               className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold hover:bg-gray-50 disabled:opacity-50 transition-colors"
@@ -272,7 +272,7 @@ export default function AppointmentsPage() {
             <div className="px-4 py-2 text-sm font-bold text-gray-700 bg-gray-50 rounded-lg border border-gray-100">
               Page {currentPage} of {totalPages}
             </div>
-            <button 
+            <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
               className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold hover:bg-gray-50 disabled:opacity-50 transition-colors"

@@ -38,8 +38,6 @@ export default function TenantsPage() {
     phone: ""
   });
 
-  const [payments, setPayments] = useState({ payInStore: true, creditCard: false, paypal: false });
-
   // Load tenants on mount
   const loadTenants = async () => {
     setIsLoading(true);
@@ -60,10 +58,6 @@ export default function TenantsPage() {
     }
   }, [selectedTenant]);
 
-  const togglePayment = (method: keyof typeof payments) => {
-    setPayments(prev => ({ ...prev, [method]: !prev[method] }));
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -72,10 +66,8 @@ export default function TenantsPage() {
     setErrorMsg("");
     setIsSubmitting(true);
     
-    // Extract selected payments array
-    const selectedPayments = Object.entries(payments)
-      .filter(([_, isSelected]) => isSelected)
-      .map(([key]) => key === 'payInStore' ? 'Pay in Store' : key === 'creditCard' ? 'Credit Card' : 'PayPal');
+    // Default payment method
+    const selectedPayments = ["Pay in Store"];
 
     const result = await createTenant({
       ...formData,
@@ -94,7 +86,6 @@ export default function TenantsPage() {
         location: "", 
         phone: ""
       });
-      setPayments({ payInStore: true, creditCard: false, paypal: false });
       loadTenants(); // Refresh list
     } else {
       setErrorMsg(result.error || "An error occurred");
@@ -216,24 +207,7 @@ export default function TenantsPage() {
               </div>
             </div>
             
-            {/* Payment Methods */}
-            <div className="col-span-1 md:col-span-2 lg:col-span-1">
-              <label className="block text-sm text-gray-400 mb-2">Accepted Payment Methods</label>
-              <div className="flex flex-wrap gap-3">
-                <label className="flex items-center gap-2 cursor-pointer bg-gray-900 px-3 py-2 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
-                  <input type="checkbox" checked={payments.payInStore} onChange={() => togglePayment('payInStore')} className="w-4 h-4 rounded text-blue-600 focus:ring-blue-600 bg-gray-800 border-gray-600" />
-                  <span className="text-sm">Pay in Store</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer bg-gray-900 px-3 py-2 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
-                  <input type="checkbox" checked={payments.creditCard} onChange={() => togglePayment('creditCard')} className="w-4 h-4 rounded text-blue-600 focus:ring-blue-600 bg-gray-800 border-gray-600" />
-                  <span className="text-sm">Credit Card</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer bg-gray-900 px-3 py-2 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
-                  <input type="checkbox" checked={payments.paypal} onChange={() => togglePayment('paypal')} className="w-4 h-4 rounded text-blue-600 focus:ring-blue-600 bg-gray-800 border-gray-600" />
-                  <span className="text-sm">PayPal</span>
-                </label>
-              </div>
-            </div>
+            {/* Removed Payment Methods to delegate to Tenant Admin */}
           </div>
           <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-700">
             <button onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-400 hover:text-white transition-colors font-medium">Cancel</button>
@@ -385,16 +359,6 @@ export default function TenantsPage() {
                     <div>
                       <span className="block text-xs text-gray-500">Phone</span>
                       <span className="text-sm text-gray-200">{selectedTenant.phone || "N/A"}</span>
-                    </div>
-                    <div>
-                      <span className="block text-xs text-gray-500 mb-1">Accepted Payments</span>
-                      <div className="flex gap-2 flex-wrap">
-                        {(selectedTenant.payments ? JSON.parse(selectedTenant.payments) : []).map((p: string, i: number) => (
-                          <span key={i} className="px-2 py-1 bg-gray-800 border border-gray-700 rounded-md text-xs text-gray-300">
-                            {p}
-                          </span>
-                        ))}
-                      </div>
                     </div>
                   </div>
                   <button 

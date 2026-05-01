@@ -12,7 +12,7 @@ import { StepPayment } from "./StepPayment";
 import { StepConfirm } from "./StepConfirm";
 
 export function BookingWizard({ tenant }: { tenant: any }) {
-  const { step, prevStep } = useBookingStore();
+  const { step, prevStep, paymentMethod } = useBookingStore();
 
   const renderStep = () => {
     switch (step) {
@@ -27,7 +27,7 @@ export function BookingWizard({ tenant }: { tenant: any }) {
       case 5:
         return <StepInfo key="step5" tenant={tenant} />;
       case 6:
-        return <StepPayment key="step6" />;
+        return <StepPayment key="step6" tenant={tenant} />;
       case 7:
         return <StepConfirm key="step7" tenant={tenant} />;
       default:
@@ -42,7 +42,7 @@ export function BookingWizard({ tenant }: { tenant: any }) {
     "Guests",
     "Your Information",
     "Payment Method",
-    "Confirmation",
+    paymentMethod === "in_store" || !paymentMethod ? "Confirmation" : "Checkout",
   ];
 
   return (

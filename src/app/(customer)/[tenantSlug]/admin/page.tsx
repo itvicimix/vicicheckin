@@ -7,6 +7,7 @@ import { getCustomers } from "@/actions/customer";
 import { getBookings, updateBookingStatus } from "@/actions/booking";
 import { getTenantBySlug, updateLuckyWheel } from "@/actions/tenant";
 import { sendSMSPromotion } from "@/actions/sms";
+import PushNotificationManager from "@/components/admin/PushNotificationManager";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -248,6 +249,9 @@ export default function AdminDashboardPage() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 h-fit">
           <h2 className="text-lg font-bold text-gray-900 mb-6">Quick Actions</h2>
           <div className="space-y-4">
+            {tenant?.id && (
+              <PushNotificationManager tenantId={tenant.id} variant="button" />
+            )}
             <button 
               onClick={() => router.push(`/${tenantSlug}/admin/calendar?action=add-booking`)}
               className="w-full p-4 rounded-xl border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all flex items-center gap-4 text-left"

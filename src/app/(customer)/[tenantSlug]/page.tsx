@@ -43,8 +43,8 @@ export default async function TenantBookingPage({ params }: PageProps) {
       </header>
 
       {/* Booking Wizard */}
-      <div className="flex-1 relative z-10 py-8 px-4 w-full">
-        <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 overflow-hidden min-h-[600px] flex flex-col">
+      <div className="flex-1 relative z-10 py-4 md:py-8 px-4 w-full flex flex-col items-center justify-center">
+        <div className="w-full max-w-3xl bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 overflow-hidden h-[calc(100vh-120px)] max-h-[800px] flex flex-col">
           <BookingWizard tenant={tenant} />
         </div>
       </div>

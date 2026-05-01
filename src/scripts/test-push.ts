@@ -3,8 +3,8 @@ import webpush from "web-push";
 
 const prisma = new PrismaClient();
 
-const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "BA512PEgF58U0KFjO-I3U_QzUMuSdlr8jQ-yjmwRajadVdefEvx_AkQ75fF30py4g6ILwKfospZ6CR1etUN6vxI";
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "Yr7XoQcBuqw3b-mq6seAb0l4ssBjnLW4CB1D3cbw0o8";
+const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "BJVb7S3LDy77F17_7U3-GUKRamS8nrho-86psTOFQ7wxwoLrQdi40zDizEJuzA4rGfGx8h_z8sFZ-5dndI8sKuY";
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "TsxAy5nIdvgMOuGf9Z0pAxO9GPYGGX-MsLMmhM78SG4";
 
 webpush.setVapidDetails(
   "mailto:admin@vicicheckin.com",

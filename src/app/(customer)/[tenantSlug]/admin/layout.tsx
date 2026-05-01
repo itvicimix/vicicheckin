@@ -25,6 +25,8 @@ import {
 import { logoutAdmin } from "@/actions/auth";
 import { getTenantBySlug } from "@/actions/tenant";
 import { getNotifications, markAsRead, markAllAsRead } from "@/actions/notification";
+import toast, { Toaster } from "react-hot-toast";
+import { useRef } from "react";
 
 function formatTimeAgo(dateString: string) {
   const date = new Date(dateString);
@@ -62,6 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   const [notifications, setNotifications] = useState<any[]>([]);
+  const prevNotificationsRef = useRef<any[]>([]);
   const unreadCount = notifications.filter(n => !n.read).length;
 
   useEffect(() => {
@@ -74,6 +77,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         if (t) {
           const notifs = await getNotifications(t.id);
           setNotifications(notifs);
+          prevNotificationsRef.current = notifs;
         }
       } catch (error) {
         console.error("Error fetching tenant info:", error);
@@ -89,7 +93,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     intervalId = setInterval(async () => {
       if (tenant?.id) {
         const notifs = await getNotifications(tenant.id);
+        
+        // Check for new notifications to show toast
+        const newNotifs = notifs.filter(n => !prevNotificationsRef.current.some(pn => pn.id === n.id));
+        
+        newNotifs.forEach(newNotif => {
+          if (newNotif.type === 'appointment') {
+            toast.success(newNotif.title + "\n" + newNotif.message, {
+              duration: 5000,
+              icon: '📅'
+            });
+          } else {
+            toast(newNotif.title, { duration: 4000 });
+          }
+        });
+
+        if (newNotifs.length > 0) {
+          // Play a small notification sound
+          try {
+            const audio = new Audio('/notification.mp3');
+            audio.play().catch(e => console.log('Audio play failed', e));
+          } catch(e) {}
+        }
+
         setNotifications(notifs);
+        prevNotificationsRef.current = notifs;
       } else {
         fetchTenantData();
       }
@@ -148,6 +176,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       className={`min-h-screen flex transition-colors duration-300 ${isDarkMode ? "dark bg-zinc-950 text-white" : "bg-gray-50 text-gray-900"}`}
       style={tenant?.themeColor ? { '--color-primary': tenant.themeColor } as React.CSSProperties : undefined}
     >
+      <Toaster position="top-right" toastOptions={{ className: 'font-medium text-sm rounded-xl' }} />
+
       {/* Mobile Sidebar Overlay */}
       {isMobileMenuOpen && (
         <div 
@@ -221,7 +251,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
         {/* Top Header */}
-        <header className={`h-16 border-b flex items-center justify-between px-4 md:px-6 sticky top-0 z-10 transition-colors duration-300 ${isDarkMode ? "bg-black border-zinc-800" : "bg-white border-gray-200"}`}>
+        <header className={`h-16 border-b flex items-center justify-between px-4 md:px-6 sticky top-0 z-50 transition-colors duration-300 ${isDarkMode ? "bg-black border-zinc-800" : "bg-white border-gray-200"}`}>
           <button 
             onClick={() => setIsMobileMenuOpen(true)}
             className={`p-2 -ml-2 md:hidden rounded-lg transition-colors ${isDarkMode ? "text-zinc-400 hover:bg-zinc-900" : "text-gray-500 hover:bg-gray-100"}`}
@@ -283,7 +313,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           <div 
                             key={notif.id} 
                             onClick={() => handleNotificationClick(notif)}
-                            className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.read ? (isDarkMode ? 'bg-primary/10' : 'bg-blue-50/30') : ''} ${isDarkMode ? 'border-zinc-800 hover:bg-zinc-800' : ''}`}
+                            className={`flex flex-col flex-shrink-0 h-auto min-h-min p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.read ? (isDarkMode ? 'bg-primary/10' : 'bg-blue-50/30') : ''} ${isDarkMode ? 'border-zinc-800 hover:bg-zinc-800' : ''}`}
                           >
                             <div className="flex justify-between items-start mb-1">
                               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
@@ -296,7 +326,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                               <span className="text-xs text-gray-400 font-medium">{formatTimeAgo(notif.createdAt)}</span>
                             </div>
                             <h4 className={`text-sm font-semibold mt-2 ${isDarkMode ? "text-white" : "text-gray-800"}`}>{notif.title}</h4>
-                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">{notif.message}</p>
+                            <div className="mt-1 text-sm text-gray-500 whitespace-normal break-words leading-relaxed">
+                              {notif.message}
+                            </div>
                           </div>
                         ))
                       )}

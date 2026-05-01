@@ -366,7 +366,7 @@ export function StepConfirm({ tenant }: { tenant: any }) {
           {isSubmitting ? (
             <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
-            "Confirm Booking"
+            state.paymentMethod === "in_store" || !state.paymentMethod ? "Confirm Booking" : "Proceed to Checkout"
           )}
         </button>
       </div>

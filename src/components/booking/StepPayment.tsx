@@ -3,14 +3,32 @@
 import { useBookingStore } from "@/store/useBookingStore";
 import { Store, CreditCard, Wallet } from "lucide-react";
 
-export function StepPayment() {
+export function StepPayment({ tenant }: { tenant?: any }) {
   const { paymentMethod, setPaymentMethod, nextStep } = useBookingStore();
 
-  const methods = [
+  let enabledPayments: string[] = ["Pay in Store"];
+  if (tenant?.payments) {
+    try {
+      enabledPayments = JSON.parse(tenant.payments);
+    } catch (e) {
+      if (typeof tenant.payments === 'string') {
+        enabledPayments = tenant.payments.split(',');
+      }
+    }
+  }
+
+  // Fallback if empty
+  if (!enabledPayments || enabledPayments.length === 0) {
+    enabledPayments = ["Pay in Store"];
+  }
+
+  const allMethods = [
     { id: "in_store", name: "Pay in Store", icon: Store, description: "Pay when you arrive or finish the service." },
     { id: "credit_card", name: "Credit Card", icon: CreditCard, description: "Secure online payment." },
     { id: "paypal", name: "PayPal", icon: Wallet, description: "Fast and safe via PayPal." },
   ] as const;
+
+  const methods = allMethods.filter(m => enabledPayments.includes(m.name));
 
   return (
     <div className="flex flex-col h-full">

@@ -132,7 +132,8 @@ export default function SettingsPage() {
     setIsSaving(true);
     setSaveSuccess(false);
     try {
-      const result = await updateTenantSettings(tenant.id, formData);
+      const payload = { ...formData, payments: enabledPayments };
+      const result = await updateTenantSettings(tenant.id, payload);
       if (result.success) {
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
@@ -574,6 +575,31 @@ export default function SettingsPage() {
               </div>
               <div className="p-6 space-y-8">
                 
+                {/* Payment Selection Checkboxes */}
+                <div className="space-y-3">
+                  <h4 className="font-bold text-sm text-gray-900">Select Active Payment Methods</h4>
+                  <p className="text-xs text-gray-500 mb-3">Choose the payment options you want to offer your customers.</p>
+                  <div className="flex flex-wrap gap-4">
+                    {["Pay in Store", "Credit Card", "PayPal"].map((method) => (
+                      <label key={method} className="flex items-center gap-2 cursor-pointer bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
+                        <input 
+                          type="checkbox" 
+                          checked={enabledPayments.includes(method)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setEnabledPayments([...enabledPayments, method]);
+                            } else {
+                              setEnabledPayments(enabledPayments.filter(m => m !== method));
+                            }
+                          }}
+                          className="w-4 h-4 rounded text-primary focus:ring-primary border-gray-300" 
+                        />
+                        <span className="text-sm font-medium text-gray-700">{method}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Security Notice */}
                 <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3">
                   <CheckCircle size={20} className="text-blue-600 mt-0.5 shrink-0" />
@@ -586,12 +612,6 @@ export default function SettingsPage() {
                     </p>
                   </div>
                 </div>
-
-                {enabledPayments.length === 0 && (
-                  <p className="text-center py-4 text-gray-500 italic text-sm">
-                    No online payment methods enabled by Super Admin.
-                  </p>
-                )}
 
                 {enabledPayments.includes("Credit Card") && (
                   <div className="space-y-4 p-4 border border-gray-100 rounded-2xl">
