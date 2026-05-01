@@ -12,12 +12,12 @@ self.addEventListener('push', (event: any) => {
     }
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil((self as any).registration.showNotification(title, options));
 });
 
 self.addEventListener('notificationclick', (event: any) => {
   event.notification.close();
   event.waitUntil(
-    self.clients.openWindow(event.notification.data.url)
+    (self as any).clients.openWindow(event.notification.data.url)
   );
 });
