@@ -1,0 +1,4 @@
+const { revalidateTag } = require('next/cache');
+
+// This won't work in a standalone script easily because of Next.js context.
+// I'll just tell the user to refresh.

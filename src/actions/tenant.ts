@@ -46,7 +46,6 @@ export async function runMaintenance() {
       }
     });
 
-    revalidateTag("tenants");
     revalidatePath("/super-admin");
     return { success: true };
   } catch (error) {

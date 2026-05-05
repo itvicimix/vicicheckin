@@ -24,7 +24,7 @@ export default function SuperAdminUsersPage() {
     setIsLoading(true);
     const res = await getSuperAdminUsers();
     if (res.success) {
-      setUsers(res.data);
+      setUsers(res.data || []);
     } else {
       toast.error("Failed to load users");
     }
