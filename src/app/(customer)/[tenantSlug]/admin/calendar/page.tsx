@@ -645,7 +645,7 @@ export default function CalendarPage() {
                     <div className="text-xs text-gray-500 font-medium mt-1 flex items-center justify-between">
                       <span>{b.dateStr}</span>
                       {b.notes && (
-                        <div className="flex items-center gap-1 text-primary bg-primary/5 px-1.5 py-0.5 rounded italic truncate max-w-[100px]" title={b.notes}>
+                        <div className="flex items-center gap-1 text-primary bg-primary/10 px-2 py-1 rounded-md text-xs font-bold italic truncate max-w-[150px] border border-primary/20" title={b.notes}>
                           📝 {b.notes}
                         </div>
                       )}
@@ -689,7 +689,7 @@ export default function CalendarPage() {
                           <p className="font-bold text-gray-900">{b.customer}</p>
                           <p className="text-sm text-gray-500 flex items-center gap-2">
                             {b.service}
-                            {b.notes && <span className="text-[10px] text-primary bg-primary/5 px-1.5 py-0.5 rounded italic">📝 {b.notes}</span>}
+                            {b.notes && <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-md italic border border-primary/20">📝 {b.notes}</span>}
                           </p>
                         </div>
                       </div>

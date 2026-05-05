@@ -5,11 +5,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { StepService } from "./StepService";
 import { StepStaff } from "./StepStaff";
-import { StepDateTime } from "./StepDateTime";
-import { StepGuests } from "./StepGuests";
-import { StepInfo } from "./StepInfo";
-import { StepPayment } from "./StepPayment";
-import { StepConfirm } from "./StepConfirm";
+import dynamic from "next/dynamic";
+
+const StepDateTime = dynamic(() => import("./StepDateTime").then(m => m.StepDateTime));
+const StepGuests = dynamic(() => import("./StepGuests").then(m => m.StepGuests));
+const StepInfo = dynamic(() => import("./StepInfo").then(m => m.StepInfo));
+const StepPayment = dynamic(() => import("./StepPayment").then(m => m.StepPayment));
+const StepConfirm = dynamic(() => import("./StepConfirm").then(m => m.StepConfirm));
 
 export function BookingWizard({ tenant }: { tenant: any }) {
   const { step, prevStep, paymentMethod } = useBookingStore();

@@ -8,7 +8,7 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "super-secret-vici-booking-key-change-in-production"
 );
 
-export async function loginAdmin(tenantSlug: string, email: string, password: string) {
+export async function loginAdmin(tenantSlug: string, email: string, password: string, rememberMe: boolean = true) {
   try {
     const tenant = await prisma.tenant.findUnique({
       where: { slug: tenantSlug },
@@ -28,6 +28,10 @@ export async function loginAdmin(tenantSlug: string, email: string, password: st
       return { success: false, error: "Invalid email or password!" };
     }
 
+    // Session duration: 7 days as requested, or 24h if not remembered (optional, but requested 7 days)
+    const sessionDurationDays = rememberMe ? 7 : 1;
+    const sessionDurationSeconds = sessionDurationDays * 24 * 60 * 60;
+
     // Create JWT
     const token = await new SignJWT({
       tenantId: tenant.id,
@@ -36,7 +40,7 @@ export async function loginAdmin(tenantSlug: string, email: string, password: st
     })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
-      .setExpirationTime("7d")
+      .setExpirationTime(`${sessionDurationDays}d`)
       .sign(JWT_SECRET);
 
     // Set HTTP-only cookie
@@ -45,8 +49,8 @@ export async function loginAdmin(tenantSlug: string, email: string, password: st
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      maxAge: sessionDurationSeconds,
+      expires: new Date(Date.now() + sessionDurationSeconds * 1000),
     });
 
     return { success: true };

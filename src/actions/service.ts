@@ -1,20 +1,24 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_cache } from "next/cache";
 
-export async function getServices(tenantId: string) {
-  try {
-    const services = await prisma.service.findMany({
-      where: { tenantId },
-      orderBy: { createdAt: "desc" },
-    });
-    return JSON.parse(JSON.stringify(services));
-  } catch (error) {
-    console.error("Failed to fetch services:", error);
-    return [];
-  }
-}
+export const getServices = unstable_cache(
+  async (tenantId: string) => {
+    try {
+      const services = await prisma.service.findMany({
+        where: { tenantId },
+        orderBy: { createdAt: "desc" },
+      });
+      return JSON.parse(JSON.stringify(services));
+    } catch (error) {
+      console.error("Failed to fetch services:", error);
+      return [];
+    }
+  },
+  ["services-list"],
+  { tags: ["services"] }
+);
 
 export async function createService(tenantId: string, data: any) {
   try {

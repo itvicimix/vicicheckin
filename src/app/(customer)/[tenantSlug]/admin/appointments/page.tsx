@@ -164,7 +164,7 @@ export default function AppointmentsPage() {
                       <User size={12} /> {b.staff?.name || "Any Staff"}
                     </div>
                     {b.notes && (
-                      <div className="text-[10px] text-primary bg-primary/5 px-2 py-0.5 rounded-md mt-1.5 italic flex items-center gap-1 w-fit" title={b.notes}>
+                      <div className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-md mt-1.5 italic flex items-center gap-1 w-fit border border-primary/20" title={b.notes}>
                         📝 {b.notes}
                       </div>
                     )}
@@ -224,7 +224,7 @@ export default function AppointmentsPage() {
                   <div className="text-sm font-medium text-gray-900 line-clamp-1">{b.service?.name}</div>
                   <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5"><User size={10} /> {b.staff?.name}</div>
                   {b.notes && (
-                    <div className="text-[10px] text-primary bg-primary/5 px-1.5 py-0.5 rounded mt-1 italic line-clamp-1" title={b.notes}>
+                    <div className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-md mt-2 italic line-clamp-2 border border-primary/20" title={b.notes}>
                       📝 {b.notes}
                     </div>
                   )}

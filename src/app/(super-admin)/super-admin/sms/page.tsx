@@ -14,9 +14,9 @@ export default function SMSConfigPage() {
   const [twilioAuthToken, setTwilioAuthToken] = useState("");
   const [twilioPhone, setTwilioPhone] = useState("");
 
-  const [pendingTemplate, setPendingTemplate] = useState("Hello %customer_full_name%, your booking for %service_name% at %tenant_name% is PENDING for %appointment_start_time%. We will notify you once approved.");
-  const [approvedTemplate, setApprovedTemplate] = useState("Hi %customer_full_name%, your appointment for %service_name% at %tenant_name% on %appointment_start_time% has been APPROVED! See you then.");
-  const [rejectedTemplate, setRejectedTemplate] = useState("Hi %customer_full_name%, unfortunately your appointment for %service_name% at %tenant_name% on %appointment_start_time% has been REJECTED. Please contact us for more info.");
+  const [pendingTemplate, setPendingTemplate] = useState("Hello %customer_full_name%, your booking for %service_name% at %business_name% is PENDING for %appointment_start_time%. We will notify you once approved.");
+  const [approvedTemplate, setApprovedTemplate] = useState("Hi %customer_full_name%, your appointment for %service_name% at %business_name% on %appointment_start_time% has been APPROVED! See you then.");
+  const [rejectedTemplate, setRejectedTemplate] = useState("Hi %customer_full_name%, unfortunately your appointment for %service_name% at %business_name% on %appointment_start_time% has been REJECTED. Please contact us for more info.");
 
   useEffect(() => {
     async function fetchSettings() {
@@ -80,7 +80,7 @@ export default function SMSConfigPage() {
       
       <div>
         <h2 className="text-2xl font-bold">SMS & Twilio Configuration</h2>
-        <p className="text-gray-400 text-sm mt-1">Configure global Twilio API keys and dynamic SMS templates for all tenants.</p>
+        <p className="text-gray-400 text-sm mt-1">Configure global Twilio API keys and dynamic SMS templates for all business names.</p>
       </div>
 
       {/* API Key Config */}
@@ -157,7 +157,7 @@ export default function SMSConfigPage() {
               <span className="bg-gray-800 px-2 py-1 rounded">%customer_full_name%</span>
               <span className="bg-gray-800 px-2 py-1 rounded">%service_name%</span>
               <span className="bg-gray-800 px-2 py-1 rounded">%appointment_start_time%</span>
-              <span className="bg-gray-800 px-2 py-1 rounded">%tenant_name%</span>
+              <span className="bg-gray-800 px-2 py-1 rounded">%business_name%</span>
             </div>
           </div>
 

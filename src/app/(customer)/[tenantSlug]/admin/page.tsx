@@ -232,7 +232,7 @@ export default function AdminDashboardPage() {
                       <div className="text-[10px] text-gray-400 mt-2 flex items-center justify-between font-medium">
                         <span>📅 {new Date(booking.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                         {booking.notes && (
-                          <div className="flex items-center gap-1 text-primary bg-primary/5 px-1.5 py-0.5 rounded italic truncate max-w-[120px]" title={booking.notes}>
+                          <div className="flex items-center gap-1 text-primary bg-primary/10 px-2 py-1 rounded-md text-xs font-bold italic truncate max-w-[150px] border border-primary/20" title={booking.notes}>
                             📝 {booking.notes}
                           </div>
                         )}

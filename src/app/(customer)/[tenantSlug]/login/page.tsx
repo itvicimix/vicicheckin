@@ -17,7 +17,8 @@ export default function TenantLogin() {
     async (prevState: any, formData: FormData) => {
       const email = formData.get("email") as string;
       const password = formData.get("password") as string;
-      return await loginAdmin(tenantSlug, email, password);
+      const rememberMe = formData.get("remember-me") === "on";
+      return await loginAdmin(tenantSlug, email, password, rememberMe);
     },
     { success: false, error: "" }
   );

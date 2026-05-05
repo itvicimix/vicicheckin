@@ -194,7 +194,7 @@ export default function SettingsPage() {
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 border-b border-gray-100 pb-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Salon Settings</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
           <p className="text-gray-500 text-sm mt-1">Configure your business details, booking rules, and chatbot.</p>
         </div>
         
@@ -242,7 +242,7 @@ export default function SettingsPage() {
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <Settings size={16} /> Salon Name
+                    <Settings size={16} /> Business Name
                   </label>
                   <input 
                     type="text" 

@@ -20,7 +20,8 @@ import {
   Tag,
   Sun,
   Moon,
-  Clock
+  Clock,
+  ShieldAlert
 } from "lucide-react";
 import { logoutAdmin } from "@/actions/auth";
 import { getTenantBySlug } from "@/actions/tenant";
@@ -167,6 +168,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (tenant && tenant.status !== "Active") {
+    const isMaintenance = tenant.status === "Maintenance";
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full text-center space-y-4">
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ${isMaintenance ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600'}`}>
+            <ShieldAlert size={32} />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">
+            {isMaintenance ? 'Under Maintenance' : 'Account Suspended'}
+          </h1>
+          <p className="text-gray-600">
+            {isMaintenance 
+              ? 'Your business account is currently undergoing system maintenance. Please check back later.'
+              : 'Your business account has been suspended due to an expired subscription or administrative action. Please contact the system administrator to restore access.'}
+          </p>
+          <button onClick={handleLogout} className="text-primary hover:underline font-medium transition-colors">Log out</button>
+        </div>
       </div>
     );
   }

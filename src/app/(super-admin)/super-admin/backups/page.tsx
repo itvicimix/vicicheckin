@@ -123,7 +123,7 @@ export default function DatabaseBackupsPage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-gray-700 pt-6">
             {[
-              { label: "Tenants", value: stats?.tenants },
+              { label: "Business Names", value: stats?.tenants },
               { label: "Bookings", value: stats?.bookings },
               { label: "Customers", value: stats?.customers },
               { label: "Services", value: stats?.services },

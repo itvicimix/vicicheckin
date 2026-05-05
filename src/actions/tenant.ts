@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 
 export async function getTenants() {
   try {
@@ -15,34 +15,82 @@ export async function getTenants() {
   }
 }
 
-export async function getTenantBySlug(slug: string) {
+// Helper function to run maintenance tasks (not cached)
+export async function runMaintenance() {
   try {
-    const tenant = await prisma.tenant.findUnique({
-      where: { slug }
+    // 1. Data migration: If dueDate is null, set it to createdAt + 1 year
+    const tenantsWithNullDue = await prisma.tenant.findMany({
+      where: { dueDate: null }
     });
-    return tenant ? JSON.parse(JSON.stringify(tenant)) : null;
+    
+    if (tenantsWithNullDue.length > 0) {
+      for (const t of tenantsWithNullDue) {
+        const newDue = new Date(t.createdAt);
+        newDue.setFullYear(newDue.getFullYear() + 1);
+        await prisma.tenant.update({
+          where: { id: t.id },
+          data: { dueDate: newDue }
+        });
+      }
+    }
+
+    // 2. Auto-expire check: Transition "Active" to "Pending" if dueDate has passed
+    const now = new Date();
+    await prisma.tenant.updateMany({
+      where: {
+        status: "Active",
+        dueDate: { lt: now }
+      },
+      data: {
+        status: "Pending"
+      }
+    });
+
+    revalidateTag("tenants");
+    revalidatePath("/super-admin");
+    return { success: true };
   } catch (error) {
-    console.error("Failed to fetch tenant by slug:", error);
-    return null;
+    console.error("Maintenance error:", error);
+    return { success: false };
   }
 }
 
-export async function getTenantById(id: string) {
-  try {
-    const tenant = await prisma.tenant.findUnique({
-      where: { id }
-    });
-    return tenant ? JSON.parse(JSON.stringify(tenant)) : null;
-  } catch (error) {
-    console.error("Failed to fetch tenant by id:", error);
-    return null;
-  }
-}
+export const getTenantBySlug = unstable_cache(
+  async (slug: string) => {
+    try {
+      const tenant = await prisma.tenant.findUnique({
+        where: { slug }
+      });
+      return tenant ? JSON.parse(JSON.stringify(tenant)) : null;
+    } catch (error) {
+      console.error("Failed to fetch tenant by slug:", error);
+      return null;
+    }
+  },
+  ["tenant-by-slug"],
+  { tags: ["tenants"] }
+);
+
+export const getTenantById = unstable_cache(
+  async (id: string) => {
+    try {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id }
+      });
+      return tenant ? JSON.parse(JSON.stringify(tenant)) : null;
+    } catch (error) {
+      console.error("Failed to fetch tenant by id:", error);
+      return null;
+    }
+  },
+  ["tenant-by-id"],
+  { tags: ["tenants"] }
+);
 
 
 export async function createTenant(data: any) {
   try {
-    const { name, slug, adminEmail, adminPassword, itPassword, themeColor, logo, location, phone, payments } = data;
+    const { name, slug, adminEmail, adminPassword, itPassword, themeColor, logo, location, phone, bookingPhone, payments } = data;
 
     if (!name || !slug || !adminEmail || !adminPassword) {
       return { success: false, error: "Please fill all required fields (Name, Slug, Email, Password)" };
@@ -52,6 +100,9 @@ export async function createTenant(data: any) {
     if (existing) {
       return { success: false, error: "This URL Slug already exists, please choose another name." };
     }
+
+    const dueDate = new Date();
+    dueDate.setFullYear(dueDate.getFullYear() + 1);
 
     const tenant = await prisma.tenant.create({
       data: {
@@ -64,8 +115,10 @@ export async function createTenant(data: any) {
         logo: logo || null,
         location,
         phone,
+        bookingPhone,
         payments: JSON.stringify(payments),
         status: "Active",
+        dueDate: dueDate,
       },
     });
 
@@ -85,6 +138,7 @@ export async function updateTenantSettings(tenantId: string, data: any) {
         name: data.name !== undefined ? data.name : undefined,
         location: data.location !== undefined ? data.location : undefined,
         phone: data.phone !== undefined ? data.phone : undefined,
+        bookingPhone: data.bookingPhone !== undefined ? data.bookingPhone : undefined,
         slotInterval: data.slotInterval !== undefined ? (parseInt(data.slotInterval) || 30) : undefined,
         minLeadTime: data.minLeadTime !== undefined ? (parseInt(data.minLeadTime) || 60) : undefined,
         themeColor: data.themeColor !== undefined ? data.themeColor : undefined,
@@ -98,6 +152,8 @@ export async function updateTenantSettings(tenantId: string, data: any) {
         payments: data.payments !== undefined ? (data.payments ? JSON.stringify(data.payments) : null) : undefined,
         chatbotEnabled: data.chatbotEnabled !== undefined ? data.chatbotEnabled : undefined,
         chatbotConfig: data.chatbotConfig !== undefined ? (data.chatbotConfig ? JSON.stringify(data.chatbotConfig) : null) : undefined,
+        dueDate: data.dueDate !== undefined ? (data.dueDate ? new Date(data.dueDate) : null) : undefined,
+        status: data.status !== undefined ? data.status : undefined,
       },
     });
 
@@ -176,5 +232,43 @@ export async function updateWorkingHours(tenantId: string, data: { workingHours?
   } catch (error: any) {
     console.error("Failed to update working hours:", error);
     return { success: false, error: "System error while updating working hours" };
+  }
+}
+
+export async function getTenantStats(tenantId: string) {
+  try {
+    const bookings = await prisma.booking.findMany({
+      where: { tenantId, status: { not: "Cancelled" } },
+      include: { service: true }
+    });
+
+    const revenue = bookings.reduce((sum, b) => sum + (b.service?.price || 0), 0);
+    const bookingCount = bookings.length;
+
+    const staffCount = await prisma.staff.count({
+      where: { tenantId }
+    });
+
+    const serviceCounts: Record<string, {name: string, count: number}> = {};
+    bookings.forEach(b => {
+      if (b.service) {
+        if (!serviceCounts[b.service.id]) {
+          serviceCounts[b.service.id] = { name: b.service.name, count: 0 };
+        }
+        serviceCounts[b.service.id].count += 1;
+      }
+    });
+
+    const topServices = Object.values(serviceCounts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+
+    return { 
+      success: true, 
+      data: { revenue, bookingCount, staffCount, topServices } 
+    };
+  } catch (error) {
+    console.error("Failed to get stats:", error);
+    return { success: false, error: "Failed to get stats" };
   }
 }

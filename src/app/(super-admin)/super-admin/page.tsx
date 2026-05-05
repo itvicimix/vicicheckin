@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Link as LinkIcon, Edit2, ShieldAlert, X, Download, DollarSign, CalendarCheck, Users as UsersIcon, Scissors as ScissorsIcon, Save, Loader2, Tag } from "lucide-react";
-import { getTenants, createTenant } from "@/actions/tenant";
+import { getTenants, createTenant, runMaintenance, getTenantStats } from "@/actions/tenant";
 import { getCoupons } from "@/actions/coupon";
 
 export default function TenantsPage() {
@@ -15,6 +15,7 @@ export default function TenantsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [couponCount, setCouponCount] = useState(0);
+  const [tenantStats, setTenantStats] = useState({ revenue: 0, bookingCount: 0, staffCount: 0, topServices: [] as any[] });
   const [errorMsg, setErrorMsg] = useState("");
 
   const generatePass = () => {
@@ -35,7 +36,8 @@ export default function TenantsPage() {
     itPassword: generatePass(),
     themeColor: "#724677",
     location: "",
-    phone: ""
+    phone: "",
+    bookingPhone: ""
   });
 
   // Load tenants on mount
@@ -49,12 +51,21 @@ export default function TenantsPage() {
   };
 
   useEffect(() => {
-    loadTenants();
+    const init = async () => {
+      await runMaintenance();
+      await loadTenants();
+    };
+    init();
   }, []);
 
   useEffect(() => {
     if (selectedTenant) {
       getCoupons(selectedTenant.id).then(coupons => setCouponCount(coupons.length));
+      getTenantStats(selectedTenant.id).then(res => {
+        if (res.success && res.data) {
+          setTenantStats(res.data);
+        }
+      });
     }
   }, [selectedTenant]);
 
@@ -84,7 +95,8 @@ export default function TenantsPage() {
         itPassword: generatePass(),
         themeColor: "#724677", 
         location: "", 
-        phone: ""
+        phone: "",
+        bookingPhone: ""
       });
       loadTenants(); // Refresh list
     } else {
@@ -106,6 +118,9 @@ export default function TenantsPage() {
       itPassword: (form.elements.namedItem("itPassword") as HTMLInputElement).value,
       location: (form.elements.namedItem("location") as HTMLInputElement).value,
       phone: (form.elements.namedItem("phone") as HTMLInputElement).value,
+      bookingPhone: (form.elements.namedItem("bookingPhone") as HTMLInputElement).value,
+      dueDate: (form.elements.namedItem("dueDate") as HTMLInputElement).value,
+      status: (form.elements.namedItem("status") as HTMLSelectElement).value,
       themeColor: selectedTenant.themeColor, // Keep existing if not changed in this simple form
     };
 
@@ -127,20 +142,20 @@ export default function TenantsPage() {
       
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Tenant Management</h2>
-          <p className="text-gray-400 text-sm mt-1">Manage salons, generate booking links, and handle subscriptions.</p>
+          <h2 className="text-2xl font-bold">Business Name Management</h2>
+          <p className="text-gray-400 text-sm mt-1">Manage business names, generate booking links, and handle subscriptions.</p>
         </div>
         <button 
           onClick={() => setShowForm(!showForm)}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-lg shadow-blue-900/20"
         >
-          <Plus size={18} /> New Tenant
+          <Plus size={18} /> New Business Name
         </button>
       </div>
 
       {showForm && (
         <div className="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl animate-in fade-in slide-in-from-top-4">
-          <h3 className="text-lg font-semibold mb-4">Create New Tenant (Salon)</h3>
+          <h3 className="text-lg font-semibold mb-4">Create New Business Name</h3>
           
           {errorMsg && (
             <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-sm flex items-center gap-2">
@@ -150,7 +165,7 @@ export default function TenantsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Salon Name *</label>
+              <label className="block text-sm text-gray-400 mb-1">Business Name *</label>
               <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="e.g., Star Nails" className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white focus:border-blue-500 outline-none transition-colors" />
             </div>
             <div>
@@ -180,6 +195,10 @@ export default function TenantsPage() {
             <div>
               <label className="block text-sm text-gray-400 mb-1">Phone Number</label>
               <input type="text" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="e.g., (555) 123-4567" className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white focus:border-blue-500 outline-none transition-colors" />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Booking Phone</label>
+              <input type="text" name="bookingPhone" value={formData.bookingPhone} onChange={handleInputChange} placeholder="e.g., (555) 987-6543" className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white focus:border-blue-500 outline-none transition-colors" />
             </div>
             
             <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl space-y-3">
@@ -226,9 +245,10 @@ export default function TenantsPage() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-900/50 text-gray-400 text-sm">
-              <th className="px-6 py-4 font-medium">Tenant Name</th>
+              <th className="px-6 py-4 font-medium">Business Name</th>
               <th className="px-6 py-4 font-medium">URL & Booking Link</th>
               <th className="px-6 py-4 font-medium">Created Date</th>
+              <th className="px-6 py-4 font-medium">Next Due Day</th>
               <th className="px-6 py-4 font-medium">Status</th>
               <th className="px-6 py-4 font-medium text-right">Actions</th>
             </tr>
@@ -236,15 +256,15 @@ export default function TenantsPage() {
           <tbody className="text-sm">
             {isLoading ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
                   <Loader2 size={24} className="animate-spin mx-auto mb-2 opacity-50" />
-                  Loading tenants...
+                  Loading business names...
                 </td>
               </tr>
             ) : tenants.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
-                  No tenants found. Create one to get started!
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                  No business names found. Create one to get started!
                 </td>
               </tr>
             ) : (
@@ -252,24 +272,56 @@ export default function TenantsPage() {
                 <tr key={t.id} className="border-t border-gray-700 hover:bg-gray-750 transition-colors">
                   <td className="px-6 py-4 font-medium text-white">{t.name}</td>
                   <td className="px-6 py-4">
-                    <div className="flex flex-col gap-2">
-                      <a href={`/${t.slug}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 hover:underline text-sm font-medium transition-colors">
-                        <LinkIcon size={14} className="shrink-0" />
-                        <span className="truncate">/{t.slug} <span className="text-gray-500 font-normal text-xs ml-1">(Customer)</span></span>
-                      </a>
-                      <a href={`/${t.slug}/admin`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-purple-400 hover:text-purple-300 hover:underline text-sm font-medium transition-colors">
-                        <LinkIcon size={14} className="shrink-0" />
-                        <span className="truncate">/{t.slug}/admin <span className="text-gray-500 font-normal text-xs ml-1">(Admin)</span></span>
-                      </a>
-                    </div>
+                    {t.status === "Active" ? (
+                      <div className="flex flex-col gap-2">
+                        <a href={`/${t.slug}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 hover:underline text-sm font-medium transition-colors">
+                          <LinkIcon size={14} className="shrink-0" />
+                          <span className="truncate">/{t.slug} <span className="text-gray-500 font-normal text-xs ml-1">(Customer)</span></span>
+                        </a>
+                        <a href={`/${t.slug}/admin`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-purple-400 hover:text-purple-300 hover:underline text-sm font-medium transition-colors">
+                          <LinkIcon size={14} className="shrink-0" />
+                          <span className="truncate">/{t.slug}/admin <span className="text-gray-500 font-normal text-xs ml-1">(Admin)</span></span>
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-gray-500 italic text-xs">Links hidden</span>
+                        <span className="text-orange-400/80 text-[10px] font-bold uppercase tracking-wider">
+                          {t.status === 'Pending' ? 'Subscription Expired' : t.status === 'Suspended' ? 'Account Suspended' : t.status === 'Maintenance' ? 'Under Maintenance' : 'Unavailable'}
+                        </span>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-gray-400">{new Date(t.createdAt).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 text-orange-400 font-medium">
+                    {t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "N/A"}
+                  </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                      t.status === 'Active' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                    }`}>
-                      {t.status}
-                    </span>
+                    <select
+                      value={t.status}
+                      onChange={async (e) => {
+                        const newStatus = e.target.value;
+                        const { updateTenantSettings } = await import("@/actions/tenant");
+                        const res = await updateTenantSettings(t.id, { status: newStatus });
+                        if (res.success) {
+                          loadTenants();
+                        } else {
+                          alert("Failed to update status");
+                        }
+                      }}
+                      className={`appearance-none cursor-pointer outline-none px-2.5 py-1.5 rounded-full text-xs font-medium text-center ${
+                        t.status === 'Active' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 
+                        t.status === 'Pending' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
+                        t.status === 'Suspended' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                        t.status === 'Maintenance' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
+                        'bg-gray-500/10 text-gray-400 border border-gray-500/20'
+                      }`}
+                    >
+                      <option value="Active" className="bg-gray-900 text-white">Active</option>
+                      <option value="Pending" className="bg-gray-900 text-white">Pending</option>
+                      <option value="Suspended" className="bg-gray-900 text-white">Suspended</option>
+                      <option value="Maintenance" className="bg-gray-900 text-white">Maintenance</option>
+                    </select>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
@@ -279,7 +331,7 @@ export default function TenantsPage() {
                       >
                         <Edit2 size={18} />
                       </button>
-                      <button className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" title="Suspend Tenant">
+                      <button className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" title="Suspend Business">
                         <ShieldAlert size={18} />
                       </button>
                     </div>
@@ -301,7 +353,11 @@ export default function TenantsPage() {
                 <h2 className="text-xl font-bold text-white flex items-center gap-3">
                   {selectedTenant.name}
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    selectedTenant.status === 'Active' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                    selectedTenant.status === 'Active' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 
+                    selectedTenant.status === 'Pending' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
+                    selectedTenant.status === 'Suspended' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                    selectedTenant.status === 'Maintenance' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
+                    'bg-gray-500/10 text-gray-400 border border-gray-500/20'
                   }`}>
                     {selectedTenant.status}
                   </span>
@@ -325,15 +381,15 @@ export default function TenantsPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="bg-gray-900 border border-gray-700 p-4 rounded-xl flex flex-col">
                   <div className="text-gray-400 text-sm mb-1 flex items-center gap-1.5"><DollarSign size={16} className="text-green-400" /> Revenue</div>
-                  <div className="text-2xl font-bold text-white">$0</div>
+                  <div className="text-2xl font-bold text-white">${tenantStats.revenue.toFixed(2)}</div>
                 </div>
                 <div className="bg-gray-900 border border-gray-700 p-4 rounded-xl flex flex-col">
                   <div className="text-gray-400 text-sm mb-1 flex items-center gap-1.5"><CalendarCheck size={16} className="text-blue-400" /> Bookings</div>
-                  <div className="text-2xl font-bold text-white">0</div>
+                  <div className="text-2xl font-bold text-white">{tenantStats.bookingCount}</div>
                 </div>
                 <div className="bg-gray-900 border border-gray-700 p-4 rounded-xl flex flex-col">
                   <div className="text-gray-400 text-sm mb-1 flex items-center gap-1.5"><UsersIcon size={16} className="text-purple-400" /> Staff</div>
-                  <div className="text-2xl font-bold text-white">0</div>
+                  <div className="text-2xl font-bold text-white">{tenantStats.staffCount}</div>
                 </div>
                 <div className="bg-gray-900 border border-gray-700 p-4 rounded-xl flex flex-col">
                   <div className="text-gray-400 text-sm mb-1 flex items-center gap-1.5"><Tag size={16} className="text-pink-400" /> Coupons</div>
@@ -346,7 +402,7 @@ export default function TenantsPage() {
                 
                 {/* Form Data Preview / Edit */}
                 <div className="space-y-4">
-                  <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Tenant Configuration</h4>
+                  <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Business Configuration</h4>
                   <div className="space-y-3 bg-gray-900/50 p-4 rounded-xl border border-gray-800">
                     <div>
                       <span className="block text-xs text-gray-500">Admin Email</span>
@@ -360,6 +416,14 @@ export default function TenantsPage() {
                       <span className="block text-xs text-gray-500">Phone</span>
                       <span className="text-sm text-gray-200">{selectedTenant.phone || "N/A"}</span>
                     </div>
+                    <div>
+                      <span className="block text-xs text-gray-500">Booking Phone</span>
+                      <span className="text-sm text-gray-200">{selectedTenant.bookingPhone || "N/A"}</span>
+                    </div>
+                    <div>
+                      <span className="block text-xs text-gray-500">Next Due Day</span>
+                      <span className="text-sm text-orange-400 font-bold">{selectedTenant.dueDate ? new Date(selectedTenant.dueDate).toLocaleDateString() : "N/A"}</span>
+                    </div>
                   </div>
                   <button 
                     onClick={() => setShowEditConfig(true)}
@@ -372,8 +436,17 @@ export default function TenantsPage() {
                 {/* Top Services */}
                 <div className="space-y-4">
                   <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Top Performing Services</h4>
-                  <div className="bg-gray-900/50 border border-gray-800 rounded-xl overflow-hidden p-6 text-center text-sm text-gray-500">
-                    No services created yet.
+                  <div className="bg-gray-900/50 border border-gray-800 rounded-xl overflow-hidden p-4 text-sm text-gray-400 space-y-2">
+                    {tenantStats.topServices.length === 0 ? (
+                      <div className="text-center p-2 text-gray-500">No services booked yet.</div>
+                    ) : (
+                      tenantStats.topServices.map((svc, idx) => (
+                        <div key={idx} className="flex justify-between items-center bg-gray-900 p-2.5 rounded-lg border border-gray-800">
+                          <span className="font-medium text-gray-300 truncate pr-2">{svc.name}</span>
+                          <span className="bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded text-xs shrink-0">{svc.count} bookings</span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 
@@ -393,7 +466,7 @@ export default function TenantsPage() {
                       <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-xs font-medium text-gray-400 mb-1">Salon Name</label>
+                            <label className="block text-xs font-medium text-gray-400 mb-1">Business Name</label>
                             <input type="text" name="name" defaultValue={selectedTenant.name} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none" />
                           </div>
                           <div>
@@ -431,6 +504,27 @@ export default function TenantsPage() {
                           <div>
                             <label className="block text-xs font-medium text-gray-400 mb-1">Phone Number</label>
                             <input type="text" name="phone" defaultValue={selectedTenant.phone} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1">Booking Phone</label>
+                            <input type="text" name="bookingPhone" defaultValue={selectedTenant.bookingPhone} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1">Next Due Day</label>
+                            <input type="date" name="dueDate" defaultValue={selectedTenant.dueDate ? new Date(selectedTenant.dueDate).toISOString().split('T')[0] : ""} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1">Account Status</label>
+                            <select name="status" defaultValue={selectedTenant.status} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none bg-gray-900">
+                              <option value="Active">Active</option>
+                              <option value="Pending">Pending (Expired)</option>
+                              <option value="Suspended">Suspended (Admin action)</option>
+                              <option value="Maintenance">Maintenance Mode</option>
+                            </select>
                           </div>
                         </div>
                       </div>

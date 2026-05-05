@@ -1,7 +1,21 @@
 import { BookingWizard } from "@/components/booking/BookingWizard";
 import { notFound } from "next/navigation";
-import { getTenantBySlug } from "@/actions/tenant";
+import { getTenantBySlug, getTenants } from "@/actions/tenant";
 import { ChatbotWidget } from "@/components/common/ChatbotWidget";
+import Image from "next/image";
+import { ShieldAlert } from "lucide-react";
+
+export const revalidate = 3600; // Revalidate every hour
+
+export async function generateStaticParams() {
+  const response = await getTenants();
+  if (response.success && response.data) {
+    return response.data.map((tenant: any) => ({
+      tenantSlug: tenant.slug,
+    }));
+  }
+  return [];
+}
 
 interface PageProps {
   params: Promise<{ tenantSlug: string }>;
@@ -13,6 +27,27 @@ export default async function TenantBookingPage({ params }: PageProps) {
 
   const tenant = await getTenantBySlug(tenantSlug);
   if (!tenant) notFound();
+
+  if (tenant.status !== "Active") {
+    const isMaintenance = tenant.status === "Maintenance";
+    return (
+      <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full text-center space-y-4">
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ${isMaintenance ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600'}`}>
+            <ShieldAlert size={32} />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">
+            {isMaintenance ? 'Under Maintenance' : 'Service Temporarily Unavailable'}
+          </h1>
+          <p className="text-gray-600 font-medium">
+            {isMaintenance 
+              ? 'This business is currently undergoing maintenance. Please check back later.' 
+              : 'The subscription for this business has expired or is currently suspended. Please contact the business owner for more information.'}
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main 
@@ -29,7 +64,16 @@ export default async function TenantBookingPage({ params }: PageProps) {
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl overflow-hidden ring-2 ring-primary/20 ${!tenant.logo ? 'bg-primary text-white' : 'bg-white'}`}>
               {tenant.logo ? (
-                <img src={tenant.logo} alt="Logo" className="w-full h-full object-contain p-0.5" />
+                <div className="relative w-full h-full">
+                  <Image 
+                    src={tenant.logo} 
+                    alt="Logo" 
+                    fill 
+                    className="object-contain p-0.5" 
+                    sizes="40px"
+                    priority
+                  />
+                </div>
               ) : (
                 tenant.name.charAt(0)
               )}
