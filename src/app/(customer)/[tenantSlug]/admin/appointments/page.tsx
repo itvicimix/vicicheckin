@@ -1,20 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { Search, Loader2, Calendar, Clock, User, Phone, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { getBookings, updateBookingStatus } from "@/actions/booking";
 import { getTenantBySlug } from "@/actions/tenant";
 
-export default function AppointmentsPage() {
+function AppointmentsContent() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const tenantSlug = params.tenantSlug as string;
 
   const [bookings, setBookings] = useState<any[]>([]);
   const [tenant, setTenant] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -284,5 +285,17 @@ export default function AppointmentsPage() {
       )}
 
     </div>
+  );
+}
+
+export default function AppointmentsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    }>
+      <AppointmentsContent />
+    </Suspense>
   );
 }

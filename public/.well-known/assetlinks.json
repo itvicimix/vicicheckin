@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.vicicheckin.app",
+      "sha256_cert_fingerprints": [
+        "FA:2A:03:CB:38:9C:F3:BF:8F:71:15:2B:A2:4E:08:70:A5:10:E2:0F:D4:F9:5D:87:6D:88:B6:5E:C6:67:36:9E"
+      ]
+    }
+  }
+]

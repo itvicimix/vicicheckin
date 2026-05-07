@@ -48,6 +48,7 @@ model Tenant {
   coupons         Coupon[]
   notifications   Notification[]
   pushSubscriptions PushSubscription[]
+  attendances     Attendance[]
 }
 
 model Service {
@@ -87,6 +88,7 @@ model Staff {
 
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   bookings Booking[]
+  attendances Attendance[]
 }
 
 model Booking {
@@ -181,4 +183,22 @@ model SuperAdminUser {
   password  String
   name      String?
   createdAt DateTime @default(now())
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  tenantId  String
+  staffId   String
+  date      String   // YYYY-MM-DD
+  clockIn   String?  // HH:MM
+  clockOut  String?  // HH:MM
+  status    String   @default("Present") // Present, Absent, Late, Half-day
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  staff     Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, staffId, date])
 }

@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { Service, useBookingStore } from "@/store/useBookingStore";
 import { Clock, Check, Loader2 } from "lucide-react";
 import { getServices } from "@/actions/service";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export function StepService({ tenant }: { tenant: any }) {
   const { selectedServices, toggleService, nextStep } = useBookingStore();
+  const { t } = useTranslation();
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -47,7 +49,7 @@ export function StepService({ tenant }: { tenant: any }) {
     return (
       <div className="flex flex-col items-center justify-center h-full pb-24">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="mt-4 text-gray-500 font-medium">Loading services...</p>
+        <p className="mt-4 text-gray-500 font-medium">{t("service.loading")}</p>
       </div>
     );
   }
@@ -75,7 +77,7 @@ export function StepService({ tenant }: { tenant: any }) {
                     <h3 className="font-medium text-gray-900 text-lg">{service.name}</h3>
                     <div className="flex items-center text-sm text-gray-500 mt-1 gap-1">
                       <Clock size={14} />
-                      <span>{service.duration} min</span>
+                      <span>{service.duration} {t("service.min")}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -96,7 +98,7 @@ export function StepService({ tenant }: { tenant: any }) {
 
         {services.length === 0 && (
           <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-            No services available at the moment.
+            {t("service.noServices")}
           </div>
         )}
       </div>
@@ -107,7 +109,7 @@ export function StepService({ tenant }: { tenant: any }) {
           disabled={selectedServices.length === 0}
           className="w-full py-4 rounded-xl bg-accent-1 hover:bg-accent-2 text-white font-semibold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_14px_0_rgba(190,34,48,0.39)]"
         >
-          Continue
+          {t("service.continue")}
         </button>
       </div>
     </div>

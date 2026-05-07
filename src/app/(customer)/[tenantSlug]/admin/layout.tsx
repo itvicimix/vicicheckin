@@ -21,8 +21,11 @@ import {
   Sun,
   Moon,
   Clock,
-  ShieldAlert
+  ShieldAlert,
+  BarChart3,
+  ClipboardCheck
 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
 import { logoutAdmin } from "@/actions/auth";
 import { getTenantBySlug } from "@/actions/tenant";
 import { getNotifications, markAsRead, markAllAsRead } from "@/actions/notification";
@@ -156,10 +159,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: "Dashboard", href: `/${tenantSlug}/admin`, icon: LayoutDashboard },
     { name: "Calendar", href: `/${tenantSlug}/admin/calendar`, icon: CalendarDays },
     { name: "Appointments", href: `/${tenantSlug}/admin/appointments`, icon: ListTodo },
+    { name: "Reports", href: `/${tenantSlug}/admin/reports`, icon: BarChart3 },
     { name: "Customers", href: `/${tenantSlug}/admin/customers`, icon: User },
     { name: "Services", href: `/${tenantSlug}/admin/services`, icon: Sparkles },
-     { name: "Staff", href: `/${tenantSlug}/admin/staff`, icon: Users },
-     { name: "Promotions", href: `/${tenantSlug}/admin/promotions`, icon: Tag },
+    { name: "Staff", href: `/${tenantSlug}/admin/staff`, icon: Users },
+    { name: "Attendance", href: `/${tenantSlug}/admin/attendance`, icon: ClipboardCheck },
+    { name: "Promotions", href: `/${tenantSlug}/admin/promotions`, icon: Tag },
      { name: "Working Hours", href: `/${tenantSlug}/admin/working-hours`, icon: Clock },
      { name: "Settings", href: `/${tenantSlug}/admin/settings`, icon: Settings },
   ];
@@ -289,6 +294,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Push Notifications */}
             {tenant?.id && <PushNotificationManager tenantId={tenant.id} />}
             
+            {/* Language Switcher */}
+            <LanguageSwitcher isDarkMode={isDarkMode} />
+
             {/* Theme Toggle */}
             <button 
               onClick={toggleTheme}

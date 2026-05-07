@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { StepService } from "./StepService";
 import { StepStaff } from "./StepStaff";
 import dynamic from "next/dynamic";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const StepDateTime = dynamic(() => import("./StepDateTime").then(m => m.StepDateTime));
 const StepGuests = dynamic(() => import("./StepGuests").then(m => m.StepGuests));
@@ -15,6 +16,7 @@ const StepConfirm = dynamic(() => import("./StepConfirm").then(m => m.StepConfir
 
 export function BookingWizard({ tenant }: { tenant: any }) {
   const { step, prevStep, paymentMethod } = useBookingStore();
+  const { t } = useTranslation();
 
   const renderStep = () => {
     switch (step) {
@@ -38,13 +40,13 @@ export function BookingWizard({ tenant }: { tenant: any }) {
   };
 
   const stepsTitle = [
-    "Select Service",
-    "Select Staff",
-    "Select Date & Time",
-    "Guests",
-    "Your Information",
-    "Payment Method",
-    paymentMethod === "in_store" || !paymentMethod ? "Confirmation" : "Checkout",
+    t("wizard.selectService"),
+    t("wizard.selectStaff"),
+    t("wizard.selectDateTime"),
+    t("wizard.guests"),
+    t("wizard.yourInfo"),
+    t("wizard.paymentMethod"),
+    paymentMethod === "in_store" || !paymentMethod ? t("wizard.confirmation") : t("wizard.checkout"),
   ];
 
   return (
@@ -62,7 +64,7 @@ export function BookingWizard({ tenant }: { tenant: any }) {
         </button>
         <div className="flex-1">
           <p className="text-xs text-primary font-medium tracking-wider uppercase mb-1">
-            Step {step} of 7
+            {t("wizard.step")} {step} {t("wizard.of")} 7
           </p>
           <h2 className="text-xl font-semibold text-gray-900">{stepsTitle[step - 1]}</h2>
         </div>

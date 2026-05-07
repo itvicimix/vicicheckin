@@ -4,6 +4,7 @@ import { getTenantBySlug, getTenants } from "@/actions/tenant";
 import { ChatbotWidget } from "@/components/common/ChatbotWidget";
 import Image from "next/image";
 import { ShieldAlert } from "lucide-react";
+import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -82,6 +83,9 @@ export default async function TenantBookingPage({ params }: PageProps) {
               <h1 className="font-semibold text-lg text-gray-900">{tenant.name}</h1>
               <p className="text-xs text-gray-500">{tenant.location}</p>
             </div>
+          </div>
+          <div>
+            <LanguageSwitcher />
           </div>
         </div>
       </header>

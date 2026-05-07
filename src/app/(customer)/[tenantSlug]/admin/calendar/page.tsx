@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight, Plus, X, Loader2 } from "lucide-react";
 
 import { getTenantBySlug } from "@/actions/tenant";
@@ -49,6 +50,7 @@ export default function CalendarPage() {
           
           if (!grouped[correctDay]) grouped[correctDay] = [];
           grouped[correctDay].push({
+            id: b.id,
             time: b.time,
             customer: b.customerName,
             service: b.service?.name || "Unknown Service",
@@ -693,9 +695,12 @@ export default function CalendarPage() {
                           </p>
                         </div>
                       </div>
-                      <button className="text-sm font-medium text-blue-600 hover:underline">
+                      <Link 
+                        href={`/${tenantSlug}/admin/appointments?search=${b.id}`}
+                        className="text-sm font-medium text-blue-600 hover:underline"
+                      >
                         Details
-                      </button>
+                      </Link>
                     </div>
                   ))}
                 </div>
