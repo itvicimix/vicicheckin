@@ -70,3 +70,38 @@ export async function updateSMSTemplates(data: { pendingSmsTemplate: string; app
   }
 }
 
+export async function updateSMTPSettings(data: {
+  smtpProvider: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPass: string;
+  smtpFrom: string;
+}) {
+  try {
+    const settings = await prisma.systemSettings.upsert({
+      where: { id: 'global' },
+      update: {
+        smtpProvider: data.smtpProvider,
+        smtpHost: data.smtpHost,
+        smtpPort: data.smtpPort,
+        smtpUser: data.smtpUser,
+        smtpPass: data.smtpPass,
+        smtpFrom: data.smtpFrom,
+      },
+      create: {
+        id: 'global',
+        smtpProvider: data.smtpProvider,
+        smtpHost: data.smtpHost,
+        smtpPort: data.smtpPort,
+        smtpUser: data.smtpUser,
+        smtpPass: data.smtpPass,
+        smtpFrom: data.smtpFrom,
+      },
+    });
+    return { success: true, settings };
+  } catch (error: any) {
+    console.error('Error updating SMTP Settings:', error);
+    return { success: false, error: error.message };
+  }
+}

@@ -89,7 +89,7 @@ export default function SuperAdminProfilePage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-400 mb-0.5">Email Address</p>
-                    <p className="text-white font-medium">it@nailbook247.com</p>
+                    <p className="text-white font-medium">leonyoram@gmail.com</p>
                   </div>
                 </div>
                 <div className="mt-3 sm:mt-0">

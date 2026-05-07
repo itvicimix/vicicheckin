@@ -15,7 +15,8 @@ import {
   LogOut,
   ShieldCheck,
   UserCircle,
-  Users
+  Users,
+  Mail
 } from "lucide-react";
 
 export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
@@ -34,7 +35,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     const auth = localStorage.getItem("super_admin_auth");
     if (auth === "true") {
       setIsAuthenticated(true);
-      setLoggedUserEmail("it@nailbook247.com");
+      setLoggedUserEmail("leonyoram@gmail.com");
     } else if (auth) {
       try {
         const parsed = JSON.parse(auth);
@@ -51,14 +52,15 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     e.preventDefault();
     if (step === 1) {
       const customPw = localStorage.getItem("super_admin_custom_password") || "Mix12:33#";
-      if (email === "it@nailbook247.com" && password === customPw) {
-        const is2fa = localStorage.getItem("super_admin_2fa_enabled") === "true";
+      if (email === "leonyoram@gmail.com" && password === customPw) {
+        // Deactivated Google Authenticator as requested
+        const is2fa = false; // localStorage.getItem("super_admin_2fa_enabled") === "true";
         if (is2fa) {
           setStep(2);
           setError("");
         } else {
-          localStorage.setItem("super_admin_auth", JSON.stringify({ email: "it@nailbook247.com", role: "root" }));
-          setLoggedUserEmail("it@nailbook247.com");
+          localStorage.setItem("super_admin_auth", JSON.stringify({ email: "leonyoram@gmail.com", role: "root" }));
+          setLoggedUserEmail("leonyoram@gmail.com");
           setIsAuthenticated(true);
           setError("");
         }
@@ -76,8 +78,8 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     } else if (step === 2) {
       const isValid = await verifySuperAdminOtp(otpCode);
       if (isValid) {
-        localStorage.setItem("super_admin_auth", JSON.stringify({ email: "it@nailbook247.com", role: "root" }));
-        setLoggedUserEmail("it@nailbook247.com");
+        localStorage.setItem("super_admin_auth", JSON.stringify({ email: "leonyoram@gmail.com", role: "root" }));
+        setLoggedUserEmail("leonyoram@gmail.com");
         setIsAuthenticated(true);
         setError("");
       } else {
@@ -123,7 +125,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none transition-colors"
-                    placeholder="it@nailbook247.com"
+                    placeholder="leonyoram@gmail.com"
                     required
                   />
                 </div>
@@ -179,7 +181,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
                 </div>
                 {showQr && (
                   <div className="mt-4 p-4 bg-white rounded-xl flex flex-col items-center justify-center animate-in fade-in">
-                    <QRCodeSVG value="otpauth://totp/NailBook247%20Super%20Admin:it@nailbook247.com?secret=KVKFKRCPNZQUYMLXOVYDSROQGEZCOQZX&issuer=Nail%20Book%2024/7" size={160} />
+                    <QRCodeSVG value="otpauth://totp/NailBook247%20Super%20Admin:leonyoram@gmail.com?secret=KVKFKRCPNZQUYMLXOVYDSROQGEZCOQZX&issuer=Nail%20Book%2024/7" size={160} />
                     <p className="text-xs text-gray-600 mt-3 text-center">Scan this with Google Authenticator or Authy app.</p>
                   </div>
                 )}
@@ -195,8 +197,9 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     { name: "Business Names (Salons)", href: "/super-admin", icon: Building2 },
     { name: "SMS & API Config", href: "/super-admin/sms", icon: MessageSquare },
     { name: "Global Settings", href: "/super-admin/settings", icon: Settings },
+    { name: "Email Config", href: "/super-admin/email", icon: Mail },
     { name: "Database Backups", href: "/super-admin/backups", icon: Database },
-    ...(loggedUserEmail === "it@vicimix.com" ? [{ name: "Admin Users", href: "/super-admin/users", icon: Users }] : []),
+    ...(loggedUserEmail === "leonyoram@gmail.com" ? [{ name: "Admin Users", href: "/super-admin/users", icon: Users }] : []),
     { name: "My Profile", href: "/super-admin/profile", icon: UserCircle },
   ];
 
@@ -253,7 +256,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
               <span className="text-xs text-gray-500">{loggedUserEmail}</span>
             </div>
             <Link href="/super-admin/profile" className="w-8 h-8 bg-blue-600 hover:bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium transition-all ring-2 ring-transparent hover:ring-blue-400 cursor-pointer">
-              {loggedUserEmail === "it@nailbook247.com" ? "NB" : loggedUserEmail.substring(0, 2).toUpperCase()}
+              {loggedUserEmail === "leonyoram@gmail.com" ? "NB" : loggedUserEmail.substring(0, 2).toUpperCase()}
             </Link>
           </div>
         </header>

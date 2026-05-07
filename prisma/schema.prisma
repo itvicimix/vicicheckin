@@ -160,6 +160,14 @@ model SystemSettings {
   pendingSmsTemplate  String?  @db.Text
   approvedSmsTemplate String?  @db.Text
   rejectedSmsTemplate String?  @db.Text
+  
+  smtpProvider        String?  @default("other")
+  smtpHost            String?
+  smtpPort            Int?
+  smtpUser            String?
+  smtpPass            String?
+  smtpFrom            String?
+
   updatedAt           DateTime @updatedAt
 }
 

@@ -1,5 +1,6 @@
 "use server";
 import { prisma } from "@/lib/prisma";
+import { sendNewTrialNotificationToAdmins } from "@/actions/email";
 
 export async function registerTrial(data: {
   fullName: string;
@@ -57,6 +58,15 @@ export async function registerTrial(data: {
         enabledFeatures: JSON.stringify(defaultFeatures),
       }
     });
+
+    // Send notification to super admins asynchronously
+    sendNewTrialNotificationToAdmins({
+      businessName: data.businessName,
+      fullName: data.fullName,
+      email: data.email,
+      phone: data.phone,
+      businessType: data.businessType,
+    }).catch(console.error);
 
     return { success: true, slug: tenant.slug };
   } catch (error: any) {

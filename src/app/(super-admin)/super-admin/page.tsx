@@ -431,6 +431,27 @@ export default function TenantsPage() {
                           onClick={async () => {
                             if(confirm("Approve 30-day trial for " + t.name + "?")) {
                               const { updateTenantSettings } = await import("@/actions/tenant");
+                              const { sendTrialApprovedEmail } = await import("@/actions/email");
+                              
+                              // 1. Send approval email with credentials
+                              const emailRes = await sendTrialApprovedEmail({
+                                toEmail: t.adminEmail,
+                                businessName: t.name,
+                                username: t.adminUsername || t.adminEmail, // fallback to email if username is somehow empty
+                                password: t.adminPassword,
+                                slug: t.slug
+                              });
+
+                              if (!emailRes.success) {
+                                alert("Warning: Failed to send approval email: " + emailRes.error);
+                                if(!confirm("Email failed to send. Do you still want to approve this trial?")) {
+                                  return; // Stop approval if user cancels
+                                }
+                              } else {
+                                alert("Approval email sent successfully!");
+                              }
+
+                              // 2. Update status and due date
                               const d = new Date();
                               d.setDate(d.getDate() + 30);
                               const res = await updateTenantSettings(t.id, { status: "Active", dueDate: d.toISOString() });
