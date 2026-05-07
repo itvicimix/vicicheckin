@@ -43,9 +43,9 @@ export default function TenantLogin() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           {tenant?.logo ? (
-            <img src={tenant.logo} alt={tenant?.name || tenantSlug} className="w-16 h-16 rounded-xl object-cover shadow-lg" />
+            <img src={tenant.logo} alt={tenant?.name || tenantSlug} className="w-16 h-16 rounded-full object-cover shadow-lg" />
           ) : (
-            <div className="w-16 h-16 bg-gray-900 rounded-xl flex items-center justify-center text-white font-bold text-3xl shadow-lg uppercase">
+            <div className="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-lg uppercase">
               {tenant?.name ? tenant.name.charAt(0) : tenantSlug.charAt(0)}
             </div>
           )}

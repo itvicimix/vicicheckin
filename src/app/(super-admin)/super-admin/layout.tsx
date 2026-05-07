@@ -34,7 +34,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     const auth = localStorage.getItem("super_admin_auth");
     if (auth === "true") {
       setIsAuthenticated(true);
-      setLoggedUserEmail("it@vicimix.com");
+      setLoggedUserEmail("it@nailbook247.com");
     } else if (auth) {
       try {
         const parsed = JSON.parse(auth);
@@ -51,14 +51,14 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     e.preventDefault();
     if (step === 1) {
       const customPw = localStorage.getItem("super_admin_custom_password") || "Mix12:33#";
-      if (email === "it@vicimix.com" && password === customPw) {
+      if (email === "it@nailbook247.com" && password === customPw) {
         const is2fa = localStorage.getItem("super_admin_2fa_enabled") === "true";
         if (is2fa) {
           setStep(2);
           setError("");
         } else {
-          localStorage.setItem("super_admin_auth", JSON.stringify({ email: "it@vicimix.com", role: "root" }));
-          setLoggedUserEmail("it@vicimix.com");
+          localStorage.setItem("super_admin_auth", JSON.stringify({ email: "it@nailbook247.com", role: "root" }));
+          setLoggedUserEmail("it@nailbook247.com");
           setIsAuthenticated(true);
           setError("");
         }
@@ -76,8 +76,8 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     } else if (step === 2) {
       const isValid = await verifySuperAdminOtp(otpCode);
       if (isValid) {
-        localStorage.setItem("super_admin_auth", JSON.stringify({ email: "it@vicimix.com", role: "root" }));
-        setLoggedUserEmail("it@vicimix.com");
+        localStorage.setItem("super_admin_auth", JSON.stringify({ email: "it@nailbook247.com", role: "root" }));
+        setLoggedUserEmail("it@nailbook247.com");
         setIsAuthenticated(true);
         setError("");
       } else {
@@ -104,8 +104,8 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
               <ShieldCheck size={28} />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-center text-white mb-2">Super Admin Login</h2>
-          <p className="text-gray-400 text-center text-sm mb-6">Enter your credentials to access IT Operations.</p>
+          <h2 className="text-2xl font-bold text-center text-white mb-2">Nail Book 24/7 Super Admin</h2>
+          <p className="text-gray-400 text-center text-sm mb-6">Enter your credentials to access Nail Book 24/7 Operations.</p>
           
           {error && (
             <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-sm text-center">
@@ -123,7 +123,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none transition-colors"
-                    placeholder="it@vicimix.com"
+                    placeholder="it@nailbook247.com"
                     required
                   />
                 </div>
@@ -179,7 +179,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
                 </div>
                 {showQr && (
                   <div className="mt-4 p-4 bg-white rounded-xl flex flex-col items-center justify-center animate-in fade-in">
-                    <QRCodeSVG value="otpauth://totp/Antigravity%20Super%20Admin:it@vicimix.com?secret=KVKFKRCPNZQUYMLXOVYDSROQGEZCOQZX&issuer=Antigravity%20Super%20Admin" size={160} />
+                    <QRCodeSVG value="otpauth://totp/NailBook247%20Super%20Admin:it@nailbook247.com?secret=KVKFKRCPNZQUYMLXOVYDSROQGEZCOQZX&issuer=Nail%20Book%2024/7" size={160} />
                     <p className="text-xs text-gray-600 mt-3 text-center">Scan this with Google Authenticator or Authy app.</p>
                   </div>
                 )}
@@ -209,7 +209,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold mr-3">
             <ShieldCheck size={20} />
           </div>
-          <span className="font-bold text-white text-lg">Super Admin</span>
+          <span className="font-bold text-white text-lg">Nail Book 24/7</span>
         </div>
         
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
@@ -245,7 +245,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
       <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
         {/* Top Header */}
         <header className="h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-6 sticky top-0 z-10">
-          <h1 className="font-semibold text-gray-100 hidden sm:block">IT Operations Dashboard</h1>
+          <h1 className="font-semibold text-gray-100 hidden sm:block">Nail Book 24/7 Operations</h1>
           
           <div className="flex items-center gap-4 ml-auto">
             <span className="text-sm text-gray-400">System Status: <span className="text-green-400 font-medium">All Green</span></span>
@@ -253,7 +253,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
               <span className="text-xs text-gray-500">{loggedUserEmail}</span>
             </div>
             <Link href="/super-admin/profile" className="w-8 h-8 bg-blue-600 hover:bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium transition-all ring-2 ring-transparent hover:ring-blue-400 cursor-pointer">
-              {loggedUserEmail === "it@vicimix.com" ? "IT" : loggedUserEmail.substring(0, 2).toUpperCase()}
+              {loggedUserEmail === "it@nailbook247.com" ? "NB" : loggedUserEmail.substring(0, 2).toUpperCase()}
             </Link>
           </div>
         </header>

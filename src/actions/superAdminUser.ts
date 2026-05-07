@@ -28,7 +28,7 @@ export async function createSuperAdminUser(data: { email: string, password: stri
       where: { email: data.email }
     });
     
-    if (existing || data.email === "it@vicimix.com") {
+    if (existing || data.email === "it@nailbook247.com") {
       return { success: false, error: "Email already exists or is reserved." };
     }
 

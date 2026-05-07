@@ -12,7 +12,20 @@
   --color-foreground: #171717;
   --color-paper: #ffffff;
 
-  --font-sans: var(--font-poppins), sans-serif;
+  --color-gold: #D4AF37;
+  --color-rose-gold: #B76E79;
+  --color-beige: #F5F5DC;
+  
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "Playfair Display", "Times New Roman", serif;
+
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius: 0;
 
   --animate-fade-in: fadeIn 0.5s ease-out;
   --animate-slide-up: slideUp 0.4s ease-out;

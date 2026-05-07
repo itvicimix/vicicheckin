@@ -156,12 +156,12 @@ export default function SuperAdminUsersPage() {
                 <td className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-blue-600/20 text-blue-500 flex items-center justify-center font-bold">
-                      IT
+                      NB
                     </div>
                     <span className="font-medium text-white">IT Operations</span>
                   </div>
                 </td>
-                <td className="p-4 text-gray-300">it@vicimix.com</td>
+                <td className="p-4 text-gray-300">it@nailbook247.com</td>
                 <td className="p-4 text-gray-400">System Core</td>
                 <td className="p-4">
                   <span className="bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded-full text-xs font-medium border border-blue-500/20">

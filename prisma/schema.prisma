@@ -11,44 +11,63 @@ datasource db {
 }
 
 model Tenant {
-  id            String   @id @default(uuid())
-  slug          String   @unique
-  name          String
-  adminEmail    String
-  adminPassword String
-  itPassword    String?
-  themeColor    String   @default("#000000")
-  logo          String?  @db.LongText
-  location      String?
-  phone         String?
-  bookingPhone  String?
-  googleReviewUrl String?
-  socialLinks   String?  @db.LongText
-  payments      String? // JSON string or comma-separated: ["creditCard", "paypal", "localPay"]
-  paymentConfig String? // JSON string for API keys/settings
-  slotInterval  Int      @default(30) // in minutes between time slots
-  minLeadTime   Int      @default(60) // minimum minutes in advance to book
-  luckyWheelEnabled Boolean @default(false)
+  id                     String    @id @default(uuid())
+  slug                   String    @unique
+  name                   String
+  adminEmail             String
+  adminPassword          String
+  itPassword             String?
+  themeColor             String    @default("#000000")
+  logo                   String?   @db.LongText
+  location               String?
+  ownerName              String?
+  adminUsername          String?   @unique
+  businessType           String?
+  googleMapUrl           String?   @db.Text
+  phone                  String?
+  bookingPhone           String?
+  googleReviewUrl        String?   @db.Text
+  socialLinks            String?   @db.LongText
+  payments               String? // JSON string or comma-separated: ["creditCard", "paypal", "localPay"]
+  paymentConfig          String? // JSON string for API keys/settings
+  slotInterval           Int       @default(30) // in minutes between time slots
+  minLeadTime            Int       @default(60) // minimum minutes in advance to book
+  luckyWheelEnabled      Boolean   @default(false)
   luckyWheelLastDisabled DateTime?
-  luckyWheelConfig String?  @db.LongText // JSON string for 5 prizes and percentages
-  chatbotEnabled Boolean @default(false)
-  chatbotConfig  String?  @db.LongText // JSON: { type: 'whatsapp' | 'messenger' | 'script', value: '...' }
-  workingHours  String?  @db.LongText
-  holidays      String?  @db.LongText
-  status        String   @default("Active")
-  dueDate       DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  luckyWheelConfig       String?   @db.LongText // JSON string for 5 prizes and percentages
+  chatbotEnabled         Boolean   @default(false)
+  chatbotConfig          String?   @db.LongText // JSON: { type: 'whatsapp' | 'messenger' | 'script', value: '...' }
+  workingHours           String?   @db.LongText
+  holidays               String?   @db.LongText
+  status                 String    @default("Active")
+  dueDate                DateTime?
+  enabledFeatures        String    @default("[]") @db.LongText // JSON array of strings: ["promotions", "staff", ...]
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
-  services        Service[]
-  staff           Staff[]
-  bookings        Booking[]
-  customers       Customer[]
-  promotionClaims PromotionClaim[]
-  coupons         Coupon[]
-  notifications   Notification[]
+  services          Service[]
+  staff             Staff[]
+  bookings          Booking[]
+  customers         Customer[]
+  promotionClaims   PromotionClaim[]
+  coupons           Coupon[]
+  notifications     Notification[]
   pushSubscriptions PushSubscription[]
-  attendances     Attendance[]
+  attendances       Attendance[]
+  supportMessages   SupportMessage[]
+}
+
+model SupportMessage {
+  id        String   @id @default(uuid())
+  tenantId  String
+  sender    String // "ADMIN" or "SUPERADMIN"
+  content   String   @db.LongText
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
 }
 
 model Service {
@@ -62,6 +81,8 @@ model Service {
 
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   bookings Booking[]
+
+  @@index([tenantId, category])
 }
 
 model PushSubscription {
@@ -72,22 +93,22 @@ model PushSubscription {
   p256dh    String
   createdAt DateTime @default(now())
 
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Staff {
-  id        String   @id @default(uuid())
-  tenantId  String
-  name      String
-  role      String   @default("Staff")
-  phone     String?
-  workHours String?  @db.Text
-  dayOff    String?  @default("None")
-  timeOffDates String? @db.Text // JSON string of specific off dates: ["2026-12-24", "2026-12-25"]
-  createdAt DateTime @default(now())
+  id           String   @id @default(uuid())
+  tenantId     String
+  name         String
+  role         String   @default("Staff")
+  phone        String?
+  workHours    String?  @db.Text
+  dayOff       String?  @default("None")
+  timeOffDates String?  @db.Text // JSON string of specific off dates: ["2026-12-24", "2026-12-25"]
+  createdAt    DateTime @default(now())
 
-  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  bookings Booking[]
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bookings    Booking[]
   attendances Attendance[]
 }
 
@@ -109,6 +130,9 @@ model Booking {
   service  Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   staff    Staff?    @relation(fields: [staffId], references: [id], onDelete: SetNull)
   customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, date])
+  @@index([tenantId, status])
 }
 
 model Customer {
@@ -123,28 +147,32 @@ model Customer {
 
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   bookings Booking[]
+
+  @@index([tenantId, phone])
+  @@index([tenantId, name])
 }
 
 model SystemSettings {
-  id              String   @id @default("global")
-  twilioSid       String?
-  twilioAuthToken String?
-  twilioPhone     String?
-  pendingSmsTemplate  String? @db.Text
-  approvedSmsTemplate String? @db.Text
-  rejectedSmsTemplate String? @db.Text
-  updatedAt       DateTime @updatedAt
+  id                  String   @id @default("global")
+  twilioSid           String?
+  twilioAuthToken     String?
+  twilioPhone         String?
+  pendingSmsTemplate  String?  @db.Text
+  approvedSmsTemplate String?  @db.Text
+  rejectedSmsTemplate String?  @db.Text
+  updatedAt           DateTime @updatedAt
 }
 
 model PromotionClaim {
-  id          String   @id @default(uuid())
-  tenantId    String
-  phone       String
-  prize       String
-  status      String   @default("Unused") // Unused, Redeemed
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  tenantId  String
+  phone     String
+  prize     String
+  status    String   @default("Unused") // Unused, Redeemed
+  createdAt DateTime @default(now())
 
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   @@unique([tenantId, phone]) // Ensure one spin per phone number per salon
 }
 
@@ -153,28 +181,31 @@ model Coupon {
   tenantId      String
   name          String
   code          String
-  discountValue Float    // Percentage (e.g. 10 for 10%)
+  discountValue Float // Percentage (e.g. 10 for 10%)
   startDate     DateTime
   endDate       DateTime
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, code])
+  @@index([tenantId, isActive])
 }
 
 model Notification {
   id        String   @id @default(uuid())
   tenantId  String
-  type      String   // "appointment", "update", "maintenance"
+  type      String // "appointment", "update", "maintenance"
   title     String
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
 }
 
 model SuperAdminUser {
@@ -189,16 +220,16 @@ model Attendance {
   id        String   @id @default(uuid())
   tenantId  String
   staffId   String
-  date      String   // YYYY-MM-DD
-  clockIn   String?  // HH:MM
-  clockOut  String?  // HH:MM
+  date      String // YYYY-MM-DD
+  clockIn   String? // HH:MM
+  clockOut  String? // HH:MM
   status    String   @default("Present") // Present, Absent, Late, Half-day
   notes     String?  @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  staff     Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  staff  Staff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, staffId, date])
 }

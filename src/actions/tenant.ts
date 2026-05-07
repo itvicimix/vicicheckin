@@ -54,21 +54,17 @@ export async function runMaintenance() {
   }
 }
 
-export const getTenantBySlug = unstable_cache(
-  async (slug: string) => {
-    try {
-      const tenant = await prisma.tenant.findUnique({
-        where: { slug }
-      });
-      return tenant ? JSON.parse(JSON.stringify(tenant)) : null;
-    } catch (error) {
-      console.error("Failed to fetch tenant by slug:", error);
-      return null;
-    }
-  },
-  ["tenant-by-slug"],
-  { tags: ["tenants"] }
-);
+export async function getTenantBySlug(slug: string) {
+  try {
+    const tenant = await prisma.tenant.findUnique({
+      where: { slug }
+    });
+    return tenant ? JSON.parse(JSON.stringify(tenant)) : null;
+  } catch (error) {
+    console.error("Failed to fetch tenant by slug:", error);
+    return null;
+  }
+}
 
 export const getTenantById = unstable_cache(
   async (id: string) => {
@@ -118,6 +114,7 @@ export async function createTenant(data: any) {
         payments: JSON.stringify(payments),
         status: "Active",
         dueDate: dueDate,
+        enabledFeatures: data.enabledFeatures ? JSON.stringify(data.enabledFeatures) : JSON.stringify(["promotions", "staff", "attendance", "sms", "chatbot", "reports", "googleReviews", "social", "payments", "workingHours", "staffTimeOff"]),
       },
     });
 
@@ -153,6 +150,7 @@ export async function updateTenantSettings(tenantId: string, data: any) {
         chatbotConfig: data.chatbotConfig !== undefined ? (data.chatbotConfig ? JSON.stringify(data.chatbotConfig) : null) : undefined,
         dueDate: data.dueDate !== undefined ? (data.dueDate ? new Date(data.dueDate) : null) : undefined,
         status: data.status !== undefined ? data.status : undefined,
+        enabledFeatures: data.enabledFeatures !== undefined ? (data.enabledFeatures ? JSON.stringify(data.enabledFeatures) : "[]") : undefined,
       },
     });
 
@@ -161,6 +159,22 @@ export async function updateTenantSettings(tenantId: string, data: any) {
   } catch (error: any) {
     console.error("Failed to update tenant settings:", error);
     return { success: false, error: `System error: ${error.message || "Unknown cause"}` };
+  }
+}
+
+export async function deleteTenant(tenantId: string) {
+  try {
+    // Delete tenant (cascading deletes should be handled by DB or manually if needed)
+    // In our schema, we should ensure related data is handled.
+    await prisma.tenant.delete({
+      where: { id: tenantId }
+    });
+
+    revalidatePath("/super-admin");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to delete tenant:", error);
+    return { success: false, error: "Failed to delete tenant. Ensure all related data is handled." };
   }
 }
 

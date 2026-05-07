@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "npx prisma generate && next build --webpack",
+    "dev": "next dev",
+    "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -13,12 +13,10 @@
     "@prisma/client": "^6.19.3",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.3",
-    "firebase": "^12.12.1",
     "framer-motion": "^12.38.0",
     "jose": "^6.2.3",
     "lucide-react": "^1.14.0",
     "next": "16.2.4",
-    "otplib": "^13.4.0",
     "qrcode.react": "^4.2.0",
     "react": "19.2.5",
     "react-dom": "19.2.5",

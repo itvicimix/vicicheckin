@@ -127,7 +127,7 @@ export function ChatbotWidget({ tenant }: ChatbotWidgetProps) {
                 <MessageSquare size={16} />
                 Start Live Chat
               </button>
-             <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider text-center block mt-1">Powered by Antigravity</span>
+             <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider text-center block mt-1">Powered by Nail Book 24/7</span>
           </div>
         </div>
       )}

@@ -23,7 +23,8 @@ import {
   Clock,
   ShieldAlert,
   BarChart3,
-  ClipboardCheck
+  ClipboardCheck,
+  MessageSquare
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
 import { logoutAdmin } from "@/actions/auth";
@@ -155,19 +156,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push(`/${tenantSlug}/login`);
   };
 
+  const enabledFeatures = (() => {
+    try {
+      return JSON.parse(tenant?.enabledFeatures || "[]");
+    } catch (e) { return []; }
+  })();
+
   const navigation = [
     { name: "Dashboard", href: `/${tenantSlug}/admin`, icon: LayoutDashboard },
     { name: "Calendar", href: `/${tenantSlug}/admin/calendar`, icon: CalendarDays },
     { name: "Appointments", href: `/${tenantSlug}/admin/appointments`, icon: ListTodo },
-    { name: "Reports", href: `/${tenantSlug}/admin/reports`, icon: BarChart3 },
+    { name: "Reports", href: `/${tenantSlug}/admin/reports`, icon: BarChart3, featureId: "reports" },
     { name: "Customers", href: `/${tenantSlug}/admin/customers`, icon: User },
     { name: "Services", href: `/${tenantSlug}/admin/services`, icon: Sparkles },
-    { name: "Staff", href: `/${tenantSlug}/admin/staff`, icon: Users },
-    { name: "Attendance", href: `/${tenantSlug}/admin/attendance`, icon: ClipboardCheck },
-    { name: "Promotions", href: `/${tenantSlug}/admin/promotions`, icon: Tag },
-     { name: "Working Hours", href: `/${tenantSlug}/admin/working-hours`, icon: Clock },
-     { name: "Settings", href: `/${tenantSlug}/admin/settings`, icon: Settings },
-  ];
+    { name: "Staff", href: `/${tenantSlug}/admin/staff`, icon: Users, featureId: "staff" },
+    { name: "Attendance", href: `/${tenantSlug}/admin/attendance`, icon: ClipboardCheck, featureId: "attendance" },
+    { name: "Promotions", href: `/${tenantSlug}/admin/promotions`, icon: Tag, featureId: "promotions" },
+    { name: "Working Hours", href: `/${tenantSlug}/admin/working-hours`, icon: Clock, featureId: "workingHours" },
+    { name: "Support & Feedback", href: `/${tenantSlug}/admin/support`, icon: MessageSquare },
+    { name: "Settings", href: `/${tenantSlug}/admin/settings`, icon: Settings },
+  ].filter(item => !item.featureId || enabledFeatures.includes(item.featureId));
 
   if (isLoading) {
     return (
@@ -227,12 +235,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {tenant?.logo ? (
                 <img src={tenant.logo} alt="Logo" className="w-full h-full object-contain p-0.5" />
               ) : (
-                tenant?.name?.charAt(0) || "L"
+                tenant?.name?.charAt(0) || "N"
               )}
             </div>
             <div className="flex flex-col justify-center overflow-hidden">
-              <span className="font-bold text-slate-800 text-[17px] leading-tight truncate">{tenant?.name || "Loading..."}</span>
-              <span className="text-slate-500 text-[13px] mt-0.5 leading-tight truncate">{tenant?.location || "Dashboard"}</span>
+              <span className="font-bold text-slate-800 text-[17px] leading-tight truncate">{tenant?.name || "Nail Book 24/7"}</span>
+              <span className="text-slate-500 text-[13px] mt-0.5 leading-tight truncate">{tenant?.location || "Nail Book 24/7"}</span>
             </div>
           </div>
           <button 

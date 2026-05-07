@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Link as LinkIcon, Edit2, ShieldAlert, X, Download, DollarSign, CalendarCheck, Users as UsersIcon, Scissors as ScissorsIcon, Save, Loader2, Tag } from "lucide-react";
-import { getTenants, createTenant, runMaintenance, getTenantStats } from "@/actions/tenant";
+import { Plus, Link as LinkIcon, Edit2, ShieldAlert, X, Download, DollarSign, CalendarCheck, Users as UsersIcon, Scissors as ScissorsIcon, Save, Loader2, Tag, Trash2, MessageSquare, Megaphone, Send, User as UserIcon, ShieldCheck } from "lucide-react";
+import { getTenants, createTenant, runMaintenance, getTenantStats, deleteTenant } from "@/actions/tenant";
+import { getSupportMessages, sendSupportMessage, markSupportMessagesRead } from "@/actions/support";
+import { createNotification } from "@/actions/notification";
 import { getCoupons } from "@/actions/coupon";
 
 export default function TenantsPage() {
@@ -17,6 +19,10 @@ export default function TenantsPage() {
   const [couponCount, setCouponCount] = useState(0);
   const [tenantStats, setTenantStats] = useState({ revenue: 0, bookingCount: 0, staffCount: 0, topServices: [] as any[] });
   const [errorMsg, setErrorMsg] = useState("");
+  const [activeTab, setActiveTab] = useState<"businesses" | "support" | "broadcast">("businesses");
+  const [supportTickets, setSupportTickets] = useState<any[]>([]);
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [broadcastData, setBroadcastData] = useState({ title: "", message: "", type: "update" as any });
 
   const generatePass = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Removed ambiguous chars like I, O, 1, 0
@@ -111,6 +117,17 @@ export default function TenantsPage() {
     
     setIsSubmitting(true);
     const form = e.currentTarget;
+    // Collect enabled features from checkboxes
+    const enabledFeatures: string[] = [];
+    [
+      "promotions", "staff", "attendance", "sms", "chatbot", "reports", 
+      "googleReviews", "social", "payments", "workingHours", "staffTimeOff"
+    ].forEach(featId => {
+      if ((form.elements.namedItem(`feature_${featId}`) as HTMLInputElement)?.checked) {
+        enabledFeatures.push(featId);
+      }
+    });
+
     const updatedData = {
       name: (form.elements.namedItem("name") as HTMLInputElement).value,
       adminEmail: (form.elements.namedItem("adminEmail") as HTMLInputElement).value,
@@ -121,7 +138,8 @@ export default function TenantsPage() {
       bookingPhone: (form.elements.namedItem("bookingPhone") as HTMLInputElement).value,
       dueDate: (form.elements.namedItem("dueDate") as HTMLInputElement).value,
       status: (form.elements.namedItem("status") as HTMLSelectElement).value,
-      themeColor: selectedTenant.themeColor, // Keep existing if not changed in this simple form
+      enabledFeatures: enabledFeatures,
+      themeColor: selectedTenant.themeColor,
     };
 
     const { updateTenantSettings } = await import("@/actions/tenant");
@@ -137,21 +155,102 @@ export default function TenantsPage() {
     setIsSubmitting(false);
   };
 
+  const handleDelete = async (tenantId: string, name: string) => {
+    if (confirm(`Are you sure you want to delete ${name}? All associated data will be permanently removed.`)) {
+      setIsLoading(true);
+      const res = await deleteTenant(tenantId);
+      if (res.success) {
+        loadTenants();
+      } else {
+        alert(res.error);
+      }
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTicket || !newMessage.trim() || isSubmitting) return;
+    
+    setIsSubmitting(true);
+    const res = await sendSupportMessage(selectedTicket.id, "SUPERADMIN", newMessage);
+    if (res.success) {
+      setSupportTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, supportMessages: [...t.supportMessages, res.data] } : t));
+      setNewMessage("");
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!broadcastData.title || !broadcastData.message || isSubmitting) return;
+
+    setIsSubmitting(true);
+    let count = 0;
+    for (const t of tenants) {
+      await createNotification(t.id, broadcastData.type, broadcastData.title, broadcastData.message);
+      count++;
+    }
+    alert(`Broadcast sent to ${count} businesses successfully!`);
+    setBroadcastData({ title: "", message: "", type: "update" });
+    setIsSubmitting(false);
+  };
+
+  const [newMessage, setNewMessage] = useState("");
+
+  useEffect(() => {
+    if (activeTab === "support") {
+      const fetchTickets = async () => {
+        const ticketsWithMsgs = await Promise.all(tenants.map(async (t) => {
+          const msgs = await getSupportMessages(t.id);
+          return { ...t, supportMessages: msgs.data || [] };
+        }));
+        setSupportTickets(ticketsWithMsgs.filter(t => t.supportMessages.length > 0));
+      };
+      fetchTickets();
+    }
+  }, [activeTab, tenants]);
+
   return (
     <div className="space-y-6 text-gray-100">
       
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Business Name Management</h2>
-          <p className="text-gray-400 text-sm mt-1">Manage business names, generate booking links, and handle subscriptions.</p>
+          <h2 className="text-2xl font-bold">Nail Book 24/7 Dashboard</h2>
+          <p className="text-gray-400 text-sm mt-1">Manage businesses, support requests, and system-wide announcements.</p>
         </div>
-        <button 
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-lg shadow-blue-900/20"
-        >
-          <Plus size={18} /> New Business Name
-        </button>
+        <div className="flex bg-gray-800 p-1 rounded-xl border border-gray-700">
+          <button 
+            onClick={() => setActiveTab("businesses")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'businesses' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+          >
+            <ShieldCheck size={16} /> Businesses
+          </button>
+          <button 
+            onClick={() => setActiveTab("support")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'support' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+          >
+            <MessageSquare size={16} /> Support
+          </button>
+          <button 
+            onClick={() => setActiveTab("broadcast")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'broadcast' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+          >
+            <Megaphone size={16} /> Broadcast
+          </button>
+        </div>
       </div>
+
+      {activeTab === "businesses" && (
+        <>
+          <div className="flex justify-end">
+            <button 
+              onClick={() => setShowForm(!showForm)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-lg shadow-blue-900/20"
+            >
+              <Plus size={18} /> New Business Name
+            </button>
+          </div>
 
       {showForm && (
         <div className="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl animate-in fade-in slide-in-from-top-4">
@@ -287,7 +386,7 @@ export default function TenantsPage() {
                       <div className="flex flex-col gap-1">
                         <span className="text-gray-500 italic text-xs">Links hidden</span>
                         <span className="text-orange-400/80 text-[10px] font-bold uppercase tracking-wider">
-                          {t.status === 'Pending' ? 'Subscription Expired' : t.status === 'Suspended' ? 'Account Suspended' : t.status === 'Maintenance' ? 'Under Maintenance' : 'Unavailable'}
+                          {t.status === 'TrialRequest' ? 'Awaiting Approval' : t.status === 'Pending' ? 'Subscription Expired' : t.status === 'Suspended' ? 'Account Suspended' : t.status === 'Maintenance' ? 'Under Maintenance' : 'Unavailable'}
                         </span>
                       </div>
                     )}
@@ -311,6 +410,7 @@ export default function TenantsPage() {
                       }}
                       className={`appearance-none cursor-pointer outline-none px-2.5 py-1.5 rounded-full text-xs font-medium text-center ${
                         t.status === 'Active' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 
+                        t.status === 'TrialRequest' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
                         t.status === 'Pending' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
                         t.status === 'Suspended' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
                         t.status === 'Maintenance' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
@@ -318,13 +418,31 @@ export default function TenantsPage() {
                       }`}
                     >
                       <option value="Active" className="bg-gray-900 text-white">Active</option>
+                      <option value="TrialRequest" className="bg-gray-900 text-white">Trial Request</option>
                       <option value="Pending" className="bg-gray-900 text-white">Pending</option>
                       <option value="Suspended" className="bg-gray-900 text-white">Suspended</option>
                       <option value="Maintenance" className="bg-gray-900 text-white">Maintenance</option>
                     </select>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-2 items-center">
+                      {t.status === 'TrialRequest' && (
+                        <button 
+                          onClick={async () => {
+                            if(confirm("Approve 30-day trial for " + t.name + "?")) {
+                              const { updateTenantSettings } = await import("@/actions/tenant");
+                              const d = new Date();
+                              d.setDate(d.getDate() + 30);
+                              const res = await updateTenantSettings(t.id, { status: "Active", dueDate: d.toISOString() });
+                              if(res.success) loadTenants();
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white rounded-lg transition-colors font-medium text-xs border border-purple-500/30"
+                          title="Approve 30-Day Trial"
+                        >
+                          Approve Trial
+                        </button>
+                      )}
                       <button 
                         onClick={() => { setSelectedTenant(t); setShowEditConfig(false); }}
                         className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors" title="Edit & Details"
@@ -334,6 +452,13 @@ export default function TenantsPage() {
                       <button className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" title="Suspend Business">
                         <ShieldAlert size={18} />
                       </button>
+                      <button 
+                        onClick={() => handleDelete(t.id, t.name)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors" 
+                        title="Delete Business"
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -342,6 +467,151 @@ export default function TenantsPage() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
+
+      {activeTab === "support" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-250px)]">
+          {/* Ticket List */}
+          <div className="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden flex flex-col">
+            <div className="p-4 bg-gray-900/50 border-b border-gray-700 font-bold text-sm">Inbox</div>
+            <div className="flex-1 overflow-y-auto">
+              {supportTickets.length === 0 ? (
+                <div className="p-6 text-center text-gray-500 text-sm italic">No active support tickets.</div>
+              ) : (
+                supportTickets.map(t => (
+                  <div 
+                    key={t.id} 
+                    onClick={() => { setSelectedTicket(t); markSupportMessagesRead(t.id, "SUPERADMIN"); }}
+                    className={`p-4 border-b border-gray-700 cursor-pointer transition-colors flex items-center gap-3 ${selectedTicket?.id === t.id ? 'bg-blue-600/10 border-l-4 border-l-blue-500' : 'hover:bg-gray-750'}`}
+                  >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden ${!t.logo ? 'bg-gray-700' : 'bg-white'}`}>
+                      {t.logo ? <img src={t.logo} className="w-full h-full object-contain" /> : <UserIcon size={18} className="text-gray-400" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-1">
+                        <h4 className="font-bold text-sm truncate">{t.name}</h4>
+                        <span className="text-[10px] text-gray-500 shrink-0">{new Date(t.supportMessages[t.supportMessages.length - 1]?.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-xs text-gray-400 truncate">{t.supportMessages[t.supportMessages.length - 1]?.content}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Chat Window */}
+          <div className="md:col-span-2 bg-gray-800 rounded-2xl border border-gray-700 flex flex-col overflow-hidden">
+            {selectedTicket ? (
+              <>
+                <div className="p-4 bg-gray-900/50 border-b border-gray-700 flex justify-between items-center">
+                  <h3 className="font-bold">{selectedTicket.name} <span className="text-gray-500 font-normal text-xs ml-2">Support Session</span></h3>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-900/20">
+                  {selectedTicket.supportMessages.map((msg: any) => {
+                    const isMe = msg.sender === "SUPERADMIN";
+                    return (
+                      <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+                        <div className={`flex gap-3 max-w-[80%] ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 overflow-hidden ${isMe ? "bg-blue-600 text-white" : "bg-gray-700 text-white"}`}>
+                            {isMe ? (
+                              <ShieldCheck size={14} />
+                            ) : (
+                              selectedTicket?.logo ? <img src={selectedTicket.logo} className="w-full h-full object-cover" /> : <UserIcon size={14} />
+                            )}
+                          </div>
+                          <div className="flex flex-col">
+                            <div className={`px-4 py-2 rounded-xl text-sm ${isMe ? "bg-blue-600 text-white rounded-tr-none" : "bg-gray-700 text-gray-200 rounded-tl-none"}`}>
+                              {msg.content}
+                            </div>
+                            <span className={`text-[9px] text-gray-500 mt-1 ${isMe ? "text-right" : "text-left"}`}>
+                              {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <form onSubmit={handleSendReply} className="p-4 bg-gray-900/50 border-t border-gray-700 flex gap-2">
+                  <input 
+                    type="text" 
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type your reply..." 
+                    className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-sm outline-none focus:border-blue-500"
+                  />
+                  <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors">
+                    <Send size={18} />
+                  </button>
+                </form>
+              </>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-gray-500 p-6 text-center">
+                <MessageSquare size={48} className="mb-4 opacity-20" />
+                <p>Select a business to view support messages.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "broadcast" && (
+        <div className="max-w-2xl mx-auto bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
+          <div className="p-6 border-b border-gray-700 bg-gray-900/50">
+            <h3 className="text-lg font-bold flex items-center gap-2"><Megaphone size={20} className="text-blue-400" /> Send System Update</h3>
+            <p className="text-sm text-gray-400 mt-1">Broadcast a message to ALL salon administrators and staff.</p>
+          </div>
+          <form onSubmit={handleBroadcast} className="p-6 space-y-5">
+            <div>
+              <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Announcement Type</label>
+              <div className="flex gap-3">
+                {['update', 'maintenance', 'appointment'].map(type => (
+                  <button 
+                    key={type}
+                    type="button"
+                    onClick={() => setBroadcastData({...broadcastData, type: type as any})}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium capitalize border transition-all ${broadcastData.type === type ? 'bg-blue-600 border-blue-500 text-white shadow-lg' : 'bg-gray-900 border-gray-700 text-gray-400 hover:border-gray-500'}`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Title</label>
+              <input 
+                type="text" 
+                value={broadcastData.title}
+                onChange={(e) => setBroadcastData({...broadcastData, title: e.target.value})}
+                placeholder="e.g., System Maintenance Tomorrow"
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none" 
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider">Message Content</label>
+              <textarea 
+                rows={5}
+                value={broadcastData.message}
+                onChange={(e) => setBroadcastData({...broadcastData, message: e.target.value})}
+                placeholder="Describe the update or maintenance details here..."
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none resize-none" 
+              ></textarea>
+            </div>
+            <div className="pt-4 flex justify-end">
+              <button 
+                type="submit" 
+                disabled={isSubmitting || !broadcastData.title || !broadcastData.message}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
+                Send Broadcast Now
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Edit Tenant & Statistics Modal */}
       {selectedTenant && (
@@ -354,6 +624,7 @@ export default function TenantsPage() {
                   {selectedTenant.name}
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     selectedTenant.status === 'Active' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 
+                    selectedTenant.status === 'TrialRequest' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
                     selectedTenant.status === 'Pending' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
                     selectedTenant.status === 'Suspended' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
                     selectedTenant.status === 'Maintenance' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
@@ -521,10 +792,53 @@ export default function TenantsPage() {
                             <label className="block text-xs font-medium text-gray-400 mb-1">Account Status</label>
                             <select name="status" defaultValue={selectedTenant.status} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none bg-gray-900">
                               <option value="Active">Active</option>
+                              <option value="TrialRequest">Trial Request</option>
                               <option value="Pending">Pending (Expired)</option>
                               <option value="Suspended">Suspended (Admin action)</option>
                               <option value="Maintenance">Maintenance Mode</option>
                             </select>
+                          </div>
+                        </div>
+                        <div className="space-y-3 pt-2">
+                          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-700 pb-2">Feature Access Control</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                            {[
+                              { id: "promotions", name: "Promotions (Wheel & Coupons)" },
+                              { id: "staff", name: "Staff Management" },
+                              { id: "attendance", name: "Attendance Tracking" },
+                              { id: "sms", name: "SMS Marketing" },
+                              { id: "chatbot", name: "Chatbot" },
+                              { id: "reports", name: "Reports & Analytics" },
+                              { id: "googleReviews", name: "Google Review Link" },
+                              { id: "social", name: "Social Links" },
+                              { id: "payments", name: "Payment Settings" },
+                              { id: "workingHours", name: "Working Hours & Salon Holidays" },
+                              { id: "staffTimeOff", name: "Staff Time Off" },
+                            ].map((feat) => {
+                              const isEnabled = (() => {
+                                try {
+                                  const features = JSON.parse(selectedTenant.enabledFeatures || "[]");
+                                  return features.includes(feat.id);
+                                } catch (e) { return false; }
+                              })();
+
+                              return (
+                                <label key={feat.id} className="flex items-center gap-3 group cursor-pointer">
+                                  <div className="relative flex items-center">
+                                    <input 
+                                      type="checkbox" 
+                                      name={`feature_${feat.id}`}
+                                      defaultChecked={isEnabled}
+                                      className="peer h-5 w-5 appearance-none rounded border border-gray-600 bg-gray-900 checked:bg-blue-600 checked:border-blue-500 transition-all cursor-pointer"
+                                    />
+                                    <svg className="absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none left-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                  </div>
+                                  <span className="text-sm text-gray-300 group-hover:text-white transition-colors">{feat.name}</span>
+                                </label>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
@@ -539,14 +853,11 @@ export default function TenantsPage() {
                     </form>
                   </div>
                 )}
-
               </div>
-
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

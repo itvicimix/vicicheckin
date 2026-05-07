@@ -117,8 +117,19 @@ export default function SettingsPage() {
             },
             adminEmail: t.adminEmail || "",
             adminPassword: t.adminPassword || "",
-            itPassword: t.itPassword || ""
+            itPassword: t.itPassword || "",
+            enabledFeatures: (() => {
+              try {
+                return JSON.parse(t.enabledFeatures || "[]");
+              } catch (e) { return []; }
+            })()
           });
+          
+          // If payments is disabled by Super Admin, override local enabledPayments to just "Pay in Store"
+          const features = t.enabledFeatures ? JSON.parse(t.enabledFeatures) : [];
+          if (!features.includes("payments")) {
+            setEnabledPayments(["Pay in Store"]);
+          }
       }
       setIsLoading(false);
     };
@@ -206,27 +217,33 @@ export default function SettingsPage() {
           >
             General
           </button>
-          <button 
-            type="button"
-            onClick={() => setActiveTab("payments")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'payments' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            Payments
-          </button>
-          <button 
-            type="button"
-            onClick={() => setActiveTab("social")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'social' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            Social
-          </button>
-          <button 
-            type="button"
-            onClick={() => setActiveTab("chatbot")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'chatbot' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            Chatbot
-          </button>
+          {formData.enabledFeatures?.includes("payments") && (
+            <button 
+              type="button"
+              onClick={() => setActiveTab("payments")}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'payments' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Payments
+            </button>
+          )}
+          {formData.enabledFeatures?.includes("social") && (
+            <button 
+              type="button"
+              onClick={() => setActiveTab("social")}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'social' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Social
+            </button>
+          )}
+          {formData.enabledFeatures?.includes("chatbot") && (
+            <button 
+              type="button"
+              onClick={() => setActiveTab("chatbot")}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'chatbot' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Chatbot
+            </button>
+          )}
         </div>
       </div>
 
@@ -276,9 +293,9 @@ export default function SettingsPage() {
                   </label>
                   <div className="flex items-center gap-4">
                     {formData.logo ? (
-                      <img src={formData.logo} alt="Logo" className="h-16 w-16 object-contain rounded-lg border border-gray-200" />
+                      <img src={formData.logo} alt="Logo" className="h-16 w-16 object-contain rounded-full border border-gray-200" />
                     ) : (
-                      <div className="h-16 w-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs border border-gray-200">No Logo</div>
+                      <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-xs border border-gray-200">No Logo</div>
                     )}
                     <input 
                       type="file" 
@@ -312,19 +329,21 @@ export default function SettingsPage() {
                     className="w-full p-2.5 rounded-xl border border-gray-200 focus:border-primary outline-none" 
                   />
                 </div>
-                <div className="space-y-2 col-span-1 md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <MapPin size={16} /> Google Map Review Link
-                  </label>
-                  <input 
-                    type="url" 
-                    value={formData.googleReviewUrl}
-                    onChange={(e) => setFormData({...formData, googleReviewUrl: e.target.value})}
-                    placeholder="e.g., https://share.google/..."
-                    className="w-full p-2.5 rounded-xl border border-gray-200 focus:border-primary outline-none" 
-                  />
-                  <p className="text-xs text-gray-500 italic">This link will be used in the step 7 booking confirmation page for customer reviews.</p>
-                </div>
+                {formData.enabledFeatures?.includes("googleReviews") && (
+                  <div className="space-y-2 col-span-1 md:col-span-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <MapPin size={16} /> Google Map Review Link
+                    </label>
+                    <input 
+                      type="url" 
+                      value={formData.googleReviewUrl}
+                      onChange={(e) => setFormData({...formData, googleReviewUrl: e.target.value})}
+                      placeholder="e.g., https://share.google/..."
+                      className="w-full p-2.5 rounded-xl border border-gray-200 focus:border-primary outline-none" 
+                    />
+                    <p className="text-xs text-gray-500 italic">This link will be used in the step 7 booking confirmation page for customer reviews.</p>
+                  </div>
+                )}
               </div>
             </div>
 

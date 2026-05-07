@@ -192,12 +192,14 @@ export default function WorkingHoursPage() {
           >
             <CalendarOff size={16} /> Salon Holidays
           </button>
-          <button 
-            onClick={() => setActiveTab("staff")}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === 'staff' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            <Users size={16} /> Staff Time Off
-          </button>
+          {(!tenant?.enabledFeatures || JSON.parse(tenant.enabledFeatures).includes("staffTimeOff")) && (
+            <button 
+              onClick={() => setActiveTab("staff")}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === 'staff' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Users size={16} /> Staff Time Off
+            </button>
+          )}
         </div>
       </div>
 

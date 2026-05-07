@@ -6,8 +6,13 @@ import { Store, CreditCard, Wallet } from "lucide-react";
 export function StepPayment({ tenant }: { tenant?: any }) {
   const { paymentMethod, setPaymentMethod, nextStep } = useBookingStore();
 
+  let enabledFeatures: string[] = [];
+  try {
+    enabledFeatures = tenant?.enabledFeatures ? JSON.parse(tenant.enabledFeatures) : ["promotions", "staff", "attendance", "sms", "chatbot", "reports", "googleReviews", "social", "payments", "workingHours", "staffTimeOff"];
+  } catch(e) {}
+
   let enabledPayments: string[] = ["Pay in Store"];
-  if (tenant?.payments) {
+  if (enabledFeatures.includes("payments") && tenant?.payments) {
     try {
       enabledPayments = JSON.parse(tenant.payments);
     } catch (e) {
